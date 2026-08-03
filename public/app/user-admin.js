@@ -88,6 +88,44 @@ window.getCurrentUser = function() {
   }
 };
 
+window.stopUserSessionHeartbeat = function () {
+  if (window.__userSessionHeartbeatTimer) {
+    clearInterval(window.__userSessionHeartbeatTimer);
+    window.__userSessionHeartbeatTimer = null;
+  }
+};
+
+window.startUserSessionHeartbeat = function () {
+  const token = sessionStorage.getItem('userToken');
+  if (!token) {
+    window.stopUserSessionHeartbeat();
+    return;
+  }
+
+  if (window.__userSessionHeartbeatTimer) return;
+
+  window.__userSessionHeartbeatTimer = setInterval(async () => {
+    const activeToken = sessionStorage.getItem('userToken');
+    if (!activeToken) {
+      window.stopUserSessionHeartbeat();
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user/me', {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+
+      if (!response.ok && (response.status === 401 || response.status === 403)) {
+        window.stopUserSessionHeartbeat();
+        sessionStorage.removeItem('userToken');
+      }
+    } catch (err) {
+      // 일시적인 네트워크 오류는 무시하고 다음 주기에 재시도한다.
+    }
+  }, 60 * 1000);
+};
+
 // 👤 7. 회원가입 처리
 window.restoreUserSession = async function () {
   const token = sessionStorage.getItem('userToken');
@@ -118,6 +156,9 @@ window.restoreUserSession = async function () {
       }
       if (typeof window.showMyPage === 'function') {
         window.showMyPage(syncedUser);
+      }
+      if (typeof window.startUserSessionHeartbeat === 'function') {
+        window.startUserSessionHeartbeat();
       }
       return true;
     }
@@ -280,6 +321,9 @@ window.handleUserLogin = async function (e) {
       if (typeof window.updateNavState === 'function') {
         window.updateNavState();
       }
+      if (typeof window.startUserSessionHeartbeat === 'function') {
+        window.startUserSessionHeartbeat();
+      }
     }
   } catch (err) {
     console.error('[UserAdmin] 로그인 처리 오류:', err);
@@ -295,6 +339,9 @@ window.logoutUser = function() {
     sessionStorage.removeItem(USER_STORAGE_KEYS.CURRENT_USER);
     sessionStorage.removeItem('currentUser');
     sessionStorage.removeItem('userToken');
+    if (typeof window.stopUserSessionHeartbeat === 'function') {
+      window.stopUserSessionHeartbeat();
+    }
     window.safeToast('로그아웃 되었습니다.', 'info');
 
     if (typeof window.updateNavState === 'function') {
@@ -311,6 +358,9 @@ window.logoutUser = function() {
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof window.restoreUserSession === 'function') {
     window.restoreUserSession();
+  }
+  if (typeof window.startUserSessionHeartbeat === 'function') {
+    window.startUserSessionHeartbeat();
   }
 
   const loginForm = document.querySelector('#user-login-box form');
@@ -331,14 +381,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 👑 11. 관리자용 회원 삭제(탈퇴)
-window.deleteAdminUser = function(id) {
-  if (confirm('해당 회원을 정말 강제 탈퇴시키겠습니까?')) {
-    let users = getSafeStorage(USER_STORAGE_KEYS.USERS);
-    users = users.filter(u => String(u.id) !== String(id));
+window.deleteAdminUser = async function(id) {
+  if (!confirm('해당 회원을 정말 강제 탈퇴시키겠습니까?')) return;
 
-    if (setSafeStorage(USER_STORAGE_KEYS.USERS, users)) {
-      window.safeToast('회원이 삭제되었습니다.', 'warning');
-      window.renderAdminUsers();
+  const token = window.getAdminToken ? window.getAdminToken() : '';
+  if (!token || !window.isAdminSessionActive?.()) {
+    window.safeToast('관리자 인증이 필요합니다.', 'warning');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(String(id || ''))}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.success) {
+      window.safeToast(result.error || '회원 삭제에 실패했습니다.', 'warning');
+      return;
     }
+
+    const nextUsers = Array.isArray(result.users) ? result.users : [];
+    setSafeStorage(USER_STORAGE_KEYS.USERS, nextUsers);
+    setSafeStorage('crane_users', nextUsers);
+    setSafeStorage('appUsers', nextUsers);
+
+    window.safeToast('회원을 탈퇴 처리했습니다.', 'success');
+    if (typeof window.renderAdminUsers === 'function') window.renderAdminUsers(nextUsers);
+    if (typeof window.renderNewUserCount === 'function') window.renderNewUserCount(nextUsers);
+    if (typeof window.updateActiveUserStatus === 'function') window.updateActiveUserStatus();
+  } catch (err) {
+    console.error('[UserAdmin] 회원 삭제 오류:', err);
+    window.safeToast('회원 삭제 중 오류가 발생했습니다.', 'error');
   }
 };

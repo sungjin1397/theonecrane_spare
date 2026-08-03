@@ -487,6 +487,30 @@ app.put('/api/admin/users/:id/memo', authenticateAdmin, (req, res) => {
     return res.json({ success: true, user: buildUserPayload(target), users });
 });
 
+app.delete('/api/admin/users/:id', authenticateAdmin, (req, res) => {
+    const targetId = String(req.params.id || '').trim();
+    const users = readData('users');
+    const target = users.find(item => String(item.id) === targetId || String(item.phone) === targetId);
+    if (!target) return res.status(404).json({ success: false, error: '사용자를 찾을 수 없습니다.' });
+
+    const nextUsers = users.filter(item => String(item.id) !== targetId && String(item.phone) !== targetId);
+    if (!saveData('users', nextUsers)) {
+        return res.status(500).json({ success: false, error: '회원 삭제 저장에 실패했습니다.' });
+    }
+
+    for (const [sessionKey, session] of visitorSessions.entries()) {
+        const sessionUserId = String(session?.userId || session?.id || '');
+        const sessionPhone = String(session?.phone || '');
+        const targetUserId = String(target.id || '');
+        const targetPhone = String(target.phone || '');
+        if (sessionUserId === targetUserId || sessionPhone === targetPhone) {
+            visitorSessions.delete(sessionKey);
+        }
+    }
+
+    return res.json({ success: true, users: nextUsers });
+});
+
 app.get('/api/admin/visitors', authenticateAdmin, (req, res) => {
     res.json(listVisitorSessions());
 });

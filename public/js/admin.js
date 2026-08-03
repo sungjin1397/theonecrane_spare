@@ -142,7 +142,7 @@ async function getAdminUsersSnapshot() {
   }
 
   try {
-    const response = await fetch('/api/admin/dashboard', {
+    const response = await fetch('/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -154,7 +154,7 @@ async function getAdminUsersSnapshot() {
 
     const payload = await response.json().catch(() => ({}));
     const users = Array.isArray(payload) ? payload : (Array.isArray(payload?.users) ? payload.users : []);
-    if (!Array.isArray(users) || users.length === 0) return localFallback();
+    if (!Array.isArray(users)) return localFallback();
 
     setSafeStorage(window.USER_STORAGE_KEYS.USERS, users);
     setSafeStorage('crane_users', users);
@@ -404,9 +404,10 @@ window.renderAdminUsers = async function (providedUsers) {
         <td>${safeEdit}</td>
         <td>${safeDate}</td>
         <td>
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
             <button onclick="window.toggleUserEditPermission('${safeId}')" style="background:#2563eb; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">권한 ${u.editable ? '취소' : '부여'}</button>
             <button onclick="window.openVisitorMemoModal('${safeId}')" style="background:#0f766e; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">메모</button>
+            <button onclick="window.deleteAdminUser('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">탈퇴 삭제</button>
           </div>
         </td>
       </tr>

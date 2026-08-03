@@ -245,16 +245,16 @@
 }
 
 #admin-tab-erp table#mainGrid {
-    min-width: 1300px;
-    width: 100%;
-    table-layout: fixed;
+    min-width: 1900px;
+    width: max-content;
+    table-layout: auto;
 }
 
 #admin-tab-erp table#mainGrid th,
 #admin-tab-erp table#mainGrid td {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 @media screen and (max-width: 860px) {
