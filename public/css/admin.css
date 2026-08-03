@@ -549,6 +549,14 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 14px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+/* 상위 content-section 폭/overflow 제한으로 부품관리 영역이 잘리는 현상 방지 */
+#sec-admin {
+    max-width: 1500px !important;
+    overflow-x: visible !important;
 }
 
 #sec-admin #admin-tab-parts .input-side,
@@ -580,9 +588,10 @@
     }
 
     #sec-admin #admin-parts-display {
-        flex: 1 1 700px !important;
-        width: auto !important;
-        min-width: 700px !important;
+        flex: 1 1 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
     }
 }
 
@@ -602,5 +611,5 @@
 
 #sec-admin #admin-parts-display .table-wrap > table.admin-product-table {
     width: max-content !important;
-    min-width: 640px !important;
+    min-width: max(640px, 100%) !important;
 }
