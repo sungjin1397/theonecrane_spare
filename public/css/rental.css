@@ -481,6 +481,21 @@
         gap: 8px;
     }
 
+    #admin-tab-rental .rental-search {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    #admin-tab-rental .rental-search input,
+    #admin-tab-rental .rental-search select {
+        flex: 0 0 140px;
+        min-width: 140px;
+        height: 38px;
+        font-size: 13px;
+    }
+
     .rental-tab-menu {
         flex-direction: column;
         gap: 8px;
@@ -505,5 +520,41 @@
         width: 100%;
         min-height: 48px;
         font-size: 16px;
+    }
+
+    #admin-tab-parts .admin-product-table {
+        min-width: 640px;
+    }
+
+    #admin-tab-parts .admin-product-table th,
+    #admin-tab-parts .admin-product-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    #admin-tab-parts .admin-product-table td img {
+        width: 36px;
+        height: 36px;
+    }
+
+    #admin-tab-parts .admin-product-col-name {
+        min-width: 180px;
+    }
+
+    #admin-tab-parts .admin-product-col-link {
+        min-width: 180px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #admin-tab-parts .admin-product-table {
+        min-width: 580px;
+    }
+
+    #admin-tab-parts .admin-product-table th,
+    #admin-tab-parts .admin-product-table td {
+        padding: 7px 5px;
+        font-size: 11px;
     }
 }

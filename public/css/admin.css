@@ -269,6 +269,7 @@
     .sub-tab-btn {
         flex: 1 1 48%;
         min-width: 140px;
+        width: auto;
     }
     .admin-sub-header-top {
         flex-direction: column;
@@ -283,6 +284,83 @@
     #admin-tab-erp .display-side {
         flex: 1 1 100%;
         max-width: 100%;
+    }
+
+    #sec-admin .search-box,
+    #sec-admin .rental-search,
+    #sec-admin .dashboard-cards,
+    #sec-admin .form-row,
+    #sec-admin .admin-sub-header-meta {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        min-width: 0;
+    }
+
+    #sec-admin .search-box > *,
+    #sec-admin .rental-search > *,
+    #sec-admin .dashboard-cards > *,
+    #sec-admin .form-row > *,
+    #sec-admin .admin-sub-header-meta > * {
+        flex: 0 0 auto;
+    }
+
+    #sec-admin .search-box input,
+    #sec-admin .search-box select,
+    #sec-admin .rental-search input,
+    #sec-admin .rental-search select {
+        min-width: 150px;
+        flex: 0 0 150px;
+    }
+
+    #admin-tab-rental .rental-search {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    #admin-tab-rental .rental-search input,
+    #admin-tab-rental .rental-search select {
+        flex: 0 0 140px;
+        min-width: 140px;
+        height: 38px;
+        font-size: 13px;
+    }
+
+    #sec-admin .table-wrap table {
+        width: max-content;
+        min-width: 100%;
+    }
+
+    #sec-admin .table-wrap th,
+    #sec-admin .table-wrap td,
+    #sec-admin .search-box input,
+    #sec-admin .search-box select,
+    #sec-admin .rental-search input,
+    #sec-admin .rental-search select,
+    #sec-admin .form-field > label,
+    #sec-admin .sub-tab-btn,
+    #sec-admin .btn-register,
+    #sec-admin .btn-save,
+    #sec-admin .admin-logout-btn {
+        white-space: nowrap;
+    }
+
+    #sec-admin .dashboard-cards .card {
+        min-width: 220px;
+    }
+
+    #admin-tab-inbox .dashboard-cards .card {
+        min-width: 150px;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    #admin-tab-inbox .dashboard-cards .card span {
+        font-size: 16px;
+        margin-top: 4px;
     }
 }
 
@@ -299,14 +377,36 @@
         min-width: auto;
     }
 
+    #admin-tab-erp .input-side {
+        overflow-x: auto;
+    }
+
+    #admin-tab-erp .input-side form {
+        min-width: 560px;
+    }
+
     #admin-tab-erp .form-row {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: flex-end;
         gap: 8px;
     }
 
     #admin-tab-erp .form-field {
-        flex: 1 1 auto;
+        flex: 0 0 160px;
+        min-width: 160px;
+    }
+
+    #admin-tab-rental .rental-search input,
+    #admin-tab-rental .rental-search select {
+        flex: 0 0 132px;
+        min-width: 132px;
+        height: 36px;
+        font-size: 12px;
+    }
+
+    #admin-tab-erp .form-field > label {
+        white-space: nowrap;
     }
 }
 
@@ -320,4 +420,38 @@
 
 .admin-dashboard-card--teal {
     background: #065f46;
+}
+
+/* 모바일에서 마지막 로드 CSS 충돌로 슬라이드가 깨지는 것을 방지하는 관리자 전용 보정 */
+@media screen and (max-width: 860px) {
+    #sec-admin .table-wrap {
+        overflow-x: auto !important;
+        overflow-y: hidden;
+    }
+
+    #sec-admin .table-wrap > table,
+    #sec-admin table.min-table,
+    #sec-admin table#mainGrid,
+    #sec-admin table.admin-product-table {
+        width: max-content !important;
+        min-width: 100% !important;
+    }
+
+    #sec-admin #admin-tab-rental .rental-search,
+    #sec-admin #admin-tab-drivers .search-box,
+    #sec-admin #admin-tab-erp .form-row,
+    #sec-admin #admin-tab-parts .form-row {
+        display: flex;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #sec-admin #admin-tab-rental .rental-search > *,
+    #sec-admin #admin-tab-drivers .search-box > *,
+    #sec-admin #admin-tab-erp .form-row > *,
+    #sec-admin #admin-tab-parts .form-row > * {
+        flex: 0 0 auto;
+    }
 }

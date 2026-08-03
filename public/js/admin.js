@@ -404,7 +404,7 @@ window.renderAdminUsers = async function (providedUsers) {
         <td>${safeEdit}</td>
         <td>${safeDate}</td>
         <td>
-          <div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:nowrap; white-space:nowrap;">
             <button onclick="window.toggleUserEditPermission('${safeId}')" style="background:#2563eb; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">권한 ${u.editable ? '취소' : '부여'}</button>
             <button onclick="window.openVisitorMemoModal('${safeId}')" style="background:#0f766e; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">메모</button>
             <button onclick="window.deleteAdminUser('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">탈퇴 삭제</button>
@@ -732,7 +732,7 @@ async function updateActiveUserStatus() {
       const lastSeen = entry.lastSeenAt ? window.formatDisplayDateTime?.(entry.lastSeenAt, '-') : '-';
       return `
         <div style="margin-bottom:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
-          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:nowrap; white-space:nowrap; overflow-x:auto;">
             <strong>${safeName}</strong>
             <span style="font-size:12px; color:#64748b;">${safeRole} / ${safePhone}</span>
           </div>
