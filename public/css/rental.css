@@ -1,0 +1,509 @@
+@charset "UTF-8";
+/* =======================================================
+   [더원크레인 스페어 시스템 V5.3] 렌탈 및 쇼핑몰 전용 스타일 (rental.css)
+   - 전역 스타일 오염 방지 및 모바일 반응형 완전 대응
+   ======================================================= */
+
+/* -------------------------------------------------------
+   1. 크레인 부품 쇼핑몰 & 필터 버튼
+   ------------------------------------------------------- */
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-left: 0;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: #1e3a8a;
+    color: #ffffff;
+    border-color: #1e3a8a;
+}
+
+/* 상품 카드 그리드 */
+.product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 15px;
+    align-items: stretch;
+}
+
+@media (max-width: 768px) {
+    #sec-parts .filter-buttons {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    #sec-parts .filter-btn {
+        flex: 0 0 auto;
+        text-align: center;
+    }
+    .product-card { flex: 1 1 calc(50% - 16px); min-width: 0; }
+}
+
+@media (max-width: 480px) {
+    #sec-parts .filter-btn { flex: 0 0 auto; }
+    .product-card { flex-basis: 100%; }
+}
+
+.product-card {
+    flex: 1 1 calc(33.333% - 16px);
+    min-width: 220px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+.card-img-wrap {
+    width: 100%;
+    height: 180px;
+    background: #f1f5f9;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    border-radius: 4px;
+    z-index: 10;
+}
+
+.badge.new { background: #10b981; }
+.badge.used { background: #f59e0b; }
+
+.card-body {
+    padding: 16px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-price {
+    font-size: 17px;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: 8px;
+}
+
+.card-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 15px;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.buy-btn {
+    text-align: center;
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s, transform 0.1s;
+    display: block;
+    border: none;
+    cursor: pointer;
+}
+
+.buy-btn:hover { background: #1d4ed8; }
+.buy-btn:active { transform: scale(0.98); }
+
+.used-btn {
+    margin-top: 8px;
+    background: #f97316 !important;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 3px 8px rgba(249, 115, 22, 0.3);
+}
+
+.used-btn:hover {
+    background: #ea580c !important;
+}
+
+
+/* -------------------------------------------------------
+   2. 렌탈 검색 및 탭 메뉴 스타일
+   ------------------------------------------------------- */
+.rental-search {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.rental-search input,
+.rental-search select {
+    flex: 1;
+    height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #334155;
+    background-color: #ffffff;
+}
+
+.rental-tab-menu {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.rental-tab-menu .rental-tab-btn,
+.rental-tab-menu button {
+    padding: 12px 24px;
+    border: 1px solid #1e3a8a;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rental-tab-menu .rental-tab-btn.active,
+.rental-tab-menu button.active {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.rental-tab-menu button:hover {
+    background: #eff6ff;
+}
+
+.btn-submit--success {
+    background: #059669;
+}
+
+.btn-submit--success:hover {
+    background: #047857;
+}
+
+.rental-guide-heading {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #059669;
+    padding-bottom: 10px;
+}
+
+.rental-guide-list {
+    line-height: 1.8;
+    list-style-type: decimal;
+    padding-left: 20px;
+}
+
+.rental-guide-link {
+    color: #ca0f8c;
+    font-size: 17px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.rental-guide-note {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    font-size: 0.9em;
+    color: #374151;
+}
+
+/* 탭 본문 컨테이너 */
+.rental-tab {
+    display: none;
+    margin-top: 20px;
+}
+
+.rental-tab.active {
+    display: block;
+}
+
+
+/* -------------------------------------------------------
+   3. 중고상품 직거래 오버레이 모달
+   ------------------------------------------------------- */
+#usedTradeModal {
+    display: none; /* JS 제어로 flex 변환 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.65);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+#usedTradeModal .modal-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: modalFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+#usedTradeModal h3 {
+    color: #1e3a8a;
+    font-size: 20px;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+}
+
+#usedTradeModal p {
+    color: #475569;
+    line-height: 1.6;
+    font-size: 14px;
+    margin: 0;
+}
+
+.trade-phone-box {
+    background: #eff6ff;
+    border: 2px solid #2563eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 20px 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: 0.5px;
+}
+
+.trade-btn-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.trade-call-btn,
+.trade-close-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    min-height: 44px;
+}
+
+.trade-call-btn {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.trade-call-btn:hover { background: #059669; }
+
+.trade-close-btn {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.trade-close-btn:hover { background: #dc2626; }
+
+.trade-call-btn:active,
+.trade-close-btn:active {
+    transform: scale(0.96);
+    filter: brightness(0.9);
+}
+
+.trade-text {
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 16px;
+}
+
+.trade-text--large {
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.trade-text--secondary {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.trade-text--small {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+@keyframes modalFade {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* -------------------------------------------------------
+   4. 관리자 테이블 및 반응형 지원
+   ------------------------------------------------------- */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.admin-product-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+}
+
+.admin-product-table th.admin-product-col-type {
+    width: 8%;
+}
+
+.admin-product-table th.admin-product-col-image {
+    width: 10%;
+}
+
+.admin-product-table th.admin-product-col-name {
+    width: 25%;
+}
+
+.admin-product-table th.admin-product-col-price {
+    width: 15%;
+}
+
+.admin-product-table th.admin-product-col-link {
+    width: 32%;
+}
+
+.admin-product-table th.admin-product-col-actions {
+    width: 10%;
+}
+
+.admin-product-table td img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+
+/* -------------------------------------------------------
+   5. 모바일 반응형 미디어쿼리 (전역 스타일 오염 방지 적용)
+   ------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+    .product-card {
+        flex: 1 1 100%;
+    }
+
+    .rental-search {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .rental-tab-menu {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .rental-tab-menu .rental-tab-btn,
+    .rental-tab-menu button {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    /* 폼 영역 입력 요소에만 크기 지정 (전역 button/input 영향 차단) */
+    .rental-form-container input,
+    .rental-form-container select,
+    .rental-form-container textarea {
+        width: 100%;
+        min-height: 45px;
+        font-size: 16px; /* iOS 자동 줌인 방지 */
+    }
+
+    .rental-form-container button[type="submit"] {
+        width: 100%;
+        min-height: 48px;
+        font-size: 16px;
+    }
+}

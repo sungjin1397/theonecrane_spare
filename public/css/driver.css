@@ -1,0 +1,58 @@
+@charset "UTF-8";
+/* 📊 관리자 전용 레이아웃 및 공통 스타일 */
+.erp-layout { display: flex; gap: 25px; flex-wrap: wrap; }
+.input-side { flex: 1; min-width: 340px; max-width: 400px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; height: fit-content; }
+.input-side h3 { color: #1e3a8a; font-size: 16px; margin-bottom: 12px; border-left: 4px solid #f59e0b; padding-left: 8px; font-weight: bold; }
+.form-row { display: flex; gap: 10px; }
+.form-col { flex: 1; }
+
+.btn-register { width: 100%; padding: 13px; background: #1e3a8a; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+.btn-register:hover { background: #1d4ed8; }
+.btn-save { width: 100%; padding: 13px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; transition: 0.2s; }
+.btn-save:hover { background: #059669; }
+
+.display-side { flex: 3; min-width: 600px; }
+.dashboard-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+.card { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.card.blue { background: #2563eb; }
+.card.orange { background: #ea580c; }
+.card.red { background: #b91c1c; }
+.card.purple { background: #7c3aed; }
+.card.teal { background: #0d9488; }
+.card span { display: block; font-size: 22px; font-weight: 800; margin-top: 5px; font-family: 'Courier New', monospace; }
+
+/* 📱 반응형 테이블 */
+.table-wrap { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow-x: auto; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.min-table { min-width: 100%; }
+th, td { padding: 12px 8px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+th { background-color: #1e3a8a; color: white; font-weight: bold; font-size: 12px;}
+tr:hover { background-color: #f8fafc; }
+
+/* 상태 배지 */
+.status-badge { padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; display: inline-block; }
+.status-unpaid { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.status-paid { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.status-dispatch { background: #fef9c3; color: #713f12; border: 1px solid #fef08a; }
+.status-complete { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+
+/* 액션 버튼 */
+.btn-action { padding:7px 12px; border: none; border-radius: 6px; color: white; font-weight: bold; font-size: 12px; cursor: pointer; margin: 2px; transition: 0.1s; }
+.btn-approve { background: #2563eb; }
+.btn-approve:hover { background: #1d4ed8; }
+.btn-call { background: #0d9488; text-decoration: none; display: inline-block; }
+.btn-call:hover { background: #0f766e; }
+.btn-del { background: #dc2626; }
+.btn-del:hover { background: #b91c1c; }
+
+/* 🔍 검색 바 */
+.search-box { display: flex; gap: 10px; flex-wrap: wrap; background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+.search-box input, .search-box select { flex: 1; min-width: 130px; padding: 10px; font-size: 14px; background: white; }
+
+.sub-title { color: #1e3a8a; font-size: 16px; margin: 20px 0 10px; border-left: 5px solid #f59e0b; padding-left: 10px; font-weight: bold; }
+
+/* 🔒 보안 인증 잠금 화면 */
+.lock-container { max-width: 400px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; }
+.lock-container h2 { color: #1e3a8a; margin-bottom: 15px; font-size: 20px; }
+.lock-container p { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+

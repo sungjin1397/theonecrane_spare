@@ -1,0 +1,323 @@
+@charset "UTF-8";
+/* 네비게이션 바 전체 컨테이너 */
+.theone-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 20px;
+    font-family: 'Pretendard', sans-serif;
+}
+
+/* 메뉴 그룹별 배치 */
+.nav-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 카테고리 구분 라벨 */
+.nav-category-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-right: 4px;
+    text-transform: uppercase;
+}
+
+/* 개별 메뉴 버튼 스타일 (연한 파란색 포인트 적용) */
+.theone-nav a {
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+/* 마우스 올렸을 때 부드러운 연한 하늘색 배경 */
+.theone-nav a:hover {
+    background-color: var(--primary-soft);
+    color: var(--primary-color);
+}
+
+/* 현재 선택된 메뉴 (Active) */
+.theone-nav a.active {
+    background-color: var(--primary-soft);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* 관리자/계정 그룹 영역 구분감 부여 (배경색 살짝 다르게) */
+.admin-user-group {
+    background-color: var(--bg-light);
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* 관리자 관제센터 특수 강조 뱃지 (부드러운 블루톤) */
+.admin-menu-badge {
+    background-color: #dbeafe !important;
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
+}
+
+/* 관리자 서브 탭 스타일 */
+.admin-sub-header {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #1e293b;
+    border-radius: 8px;
+    color: #ffffff;
+}
+.admin-sub-header--hidden {
+    display: none;
+}
+.admin-pane {
+    display: none;
+}
+.admin-sub-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 10px;
+}
+.admin-sub-header-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.25rem;
+}
+.admin-sub-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.admin-sub-header-user {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+.admin-logout-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+.admin-sub-tabs {
+    display: flex;
+    gap: 8px;
+}
+.sub-tab-btn {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.sub-tab-btn:hover {
+    background-color: var(--primary-soft);
+}
+.sub-tab-btn.active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+#adminPasswordInput {
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 12px;
+    width: 100%;
+}
+
+/* 관리자 인박스 대시보드 카드 레이아웃 */
+.admin-dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+#admin-tab-rental .sub-title {
+    margin-top: 30px;
+}
+
+.admin-active-user-panel {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #334155;
+}
+
+.admin-active-user-panel__title {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+/* 관리자 신규 부품 등록 폼 */
+.radio-inline,
+.checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 15px;
+    font-weight: normal;
+    gap: 6px;
+}
+
+.checkbox-inline input {
+    width: 16px;
+    height: 16px;
+    accent-color: #ea580c;
+}
+
+.btn-submit--orange {
+    margin-top: 15px;
+    background: #ea580c;
+}
+
+/* 관리자 ERP 대시보드 검색 박스 */
+.admin-search-box {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+#admin-tab-erp .table-wrap {
+    overflow-x: auto;
+}
+
+#admin-tab-erp .erp-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+#admin-tab-erp .input-side {
+    flex: 1 1 360px;
+    min-width: 320px;
+    max-width: 430px;
+}
+
+#admin-tab-erp .display-side {
+    flex: 2 1 640px;
+    min-width: 0;
+}
+
+#admin-tab-erp .form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+#admin-tab-erp .form-field {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 230px;
+    min-width: 0;
+}
+
+#admin-tab-erp .form-field > label {
+    margin-bottom: 6px;
+    min-height: 18px;
+    line-height: 1.35;
+}
+
+#admin-tab-erp .form-col {
+    width: 100%;
+    min-width: 0;
+}
+
+#admin-tab-erp table#mainGrid {
+    min-width: 1300px;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#admin-tab-erp table#mainGrid th,
+#admin-tab-erp table#mainGrid td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media screen and (max-width: 860px) {
+    .admin-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-sub-tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .sub-tab-btn {
+        flex: 1 1 48%;
+        min-width: 140px;
+    }
+    .admin-sub-header-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .admin-sub-header-user {
+        overflow-wrap: anywhere;
+    }
+
+    #admin-tab-erp .input-side,
+    #admin-tab-erp .display-side {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-sub-tabs {
+        flex-direction: column;
+    }
+    .sub-tab-btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    #admin-tab-erp .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    #admin-tab-erp .form-field {
+        flex: 1 1 auto;
+    }
+}
+
+.form-row--spaced {
+    margin-bottom: 10px;
+}
+
+.admin-dashboard-card--purple {
+    background: #5b21b6;
+}
+
+.admin-dashboard-card--teal {
+    background: #065f46;
+}
