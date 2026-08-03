@@ -552,13 +552,13 @@
 }
 
 #sec-admin #admin-tab-parts .input-side,
-#sec-admin #admin-tab-parts .display-side {
+#sec-admin #admin-parts-display {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
 }
 
-#sec-admin #admin-tab-parts .display-side {
+#sec-admin #admin-parts-display {
     align-self: stretch !important;
 }
 
@@ -579,7 +579,7 @@
         min-width: 320px !important;
     }
 
-    #sec-admin #admin-tab-parts .display-side {
+    #sec-admin #admin-parts-display {
         flex: 1 1 700px !important;
         width: auto !important;
         min-width: 700px !important;
@@ -587,20 +587,20 @@
 }
 
 /* 3) 현재 등록된 부품 판매 리스트 관리 영역이 자식(table)보다 작아지지 않도록 고정 */
-#sec-admin #admin-tab-parts .display-side .sub-title,
-#sec-admin #admin-tab-parts .display-side .table-wrap {
+#sec-admin #admin-parts-display .sub-title,
+#sec-admin #admin-parts-display .table-wrap {
     display: block !important;
     width: 100% !important;
     min-width: 100% !important;
     box-sizing: border-box;
 }
 
-#sec-admin #admin-tab-parts .display-side .table-wrap {
+#sec-admin #admin-parts-display .table-wrap {
     overflow-x: auto !important;
     overflow-y: hidden !important;
 }
 
-#sec-admin #admin-tab-parts .display-side .table-wrap > table.admin-product-table {
+#sec-admin #admin-parts-display .table-wrap > table.admin-product-table {
     width: max-content !important;
     min-width: 640px !important;
 }
