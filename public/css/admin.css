@@ -155,6 +155,15 @@
     margin-top: 30px;
 }
 
+/* 렌탈관제: 검색/리스트 박스를 살짝 띄워 가독성을 높인다 */
+#admin-tab-rental .rental-search {
+    margin: 10px 0 14px;
+}
+
+#admin-tab-rental .table-wrap {
+    margin-bottom: 24px;
+}
+
 .admin-active-user-panel {
     margin-bottom: 12px;
     padding: 12px;
@@ -206,6 +215,8 @@
     gap: 20px;
     align-items: flex-start;
     flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #admin-tab-erp .input-side {
@@ -217,6 +228,11 @@
 #admin-tab-erp .display-side {
     flex: 2 1 640px;
     min-width: 0;
+    width: 100%;
+}
+
+#admin-tab-erp {
+    width: 100%;
 }
 
 #admin-tab-erp .form-row {
@@ -443,23 +459,28 @@
     }
 
     #admin-tab-erp .input-side {
-        overflow-x: auto;
+        overflow-x: visible;
     }
 
     #admin-tab-erp .input-side form {
-        min-width: 520px;
+        min-width: 0;
     }
 
     #admin-tab-erp .form-row {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: flex-end;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: stretch;
         gap: 8px;
+        overflow: visible;
     }
 
     #admin-tab-erp .form-field {
-        flex: 0 0 160px;
-        min-width: 160px;
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    #admin-tab-erp .form-col {
+        width: 100%;
     }
 
     #admin-tab-rental .rental-search input,
@@ -511,8 +532,7 @@
     }
 
     #sec-admin #admin-tab-rental .rental-search,
-    #sec-admin #admin-tab-drivers .search-box,
-    #sec-admin #admin-tab-erp .form-row {
+    #sec-admin #admin-tab-drivers .search-box {
         display: flex;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
@@ -520,8 +540,7 @@
     }
 
     #sec-admin #admin-tab-rental .rental-search > *,
-    #sec-admin #admin-tab-drivers .search-box > *,
-    #sec-admin #admin-tab-erp .form-row > * {
+    #sec-admin #admin-tab-drivers .search-box > * {
         flex: 0 0 auto;
     }
 }
