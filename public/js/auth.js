@@ -168,6 +168,7 @@ window.checkAdminSession = function () {
   } else {
     if (lockBox) lockBox.style.display = 'block';
     if (adminSubHeader) adminSubHeader.style.display = 'none';
+    const adminPanes = document.querySelectorAll('.admin-pane');
     adminPanes.forEach((pane) => {
       pane.style.display = 'none';
     });
