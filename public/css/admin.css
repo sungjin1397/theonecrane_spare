@@ -374,6 +374,23 @@
         margin-top: 4px;
     }
 
+    /* ERP: 화면 맞춤 우선 (선택 기사 카드가 과도하게 커지지 않도록 제한) */
+    #admin-tab-erp .display-side .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: visible;
+    }
+
+    #admin-tab-erp .display-side .dashboard-cards .card {
+        min-width: 0;
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    #admin-tab-erp .display-side .dashboard-cards .card span {
+        font-size: 16px;
+    }
+
     /* 부품관리: 상단 등록 박스는 화면 폭에 맞추고, 하단 리스트는 슬라이드 유지 */
     #admin-tab-parts .erp-layout {
         gap: 14px;
@@ -460,6 +477,10 @@
     #admin-tab-erp .form-field > label {
         white-space: nowrap;
     }
+
+    #admin-tab-erp .display-side .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
 }
 
 .form-row--spaced {
@@ -502,5 +523,43 @@
     #sec-admin #admin-tab-drivers .search-box > *,
     #sec-admin #admin-tab-erp .form-row > * {
         flex: 0 0 auto;
+    }
+}
+
+/* 부품관리: 전체 화면 맞춤 + 리스트 관리는 하단 배치 */
+#admin-tab-parts .erp-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#admin-tab-parts .input-side,
+#admin-tab-parts .display-side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+#admin-tab-parts .display-side {
+    order: 2;
+}
+
+#admin-tab-parts .input-side {
+    order: 1;
+}
+
+#admin-tab-parts .display-side .table-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+#admin-tab-parts .display-side table.admin-product-table {
+    width: max-content;
+    min-width: 640px;
+}
+
+@media screen and (max-width: 640px) {
+    #admin-tab-parts .display-side table.admin-product-table {
+        min-width: 560px;
     }
 }
