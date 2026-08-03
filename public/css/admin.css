@@ -286,6 +286,18 @@
         max-width: 100%;
     }
 
+    #admin-tab-erp .erp-layout {
+        gap: 14px;
+    }
+
+    #admin-tab-erp .input-side {
+        min-width: 0;
+    }
+
+    #admin-tab-erp .display-side {
+        min-width: 0;
+    }
+
     #sec-admin .search-box,
     #sec-admin .rental-search,
     #sec-admin .dashboard-cards,
@@ -294,7 +306,6 @@
         flex-wrap: nowrap;
         overflow-x: auto;
         overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
         min-width: 0;
     }
 
@@ -362,6 +373,43 @@
         font-size: 16px;
         margin-top: 4px;
     }
+
+    /* 부품관리: 상단 등록 박스는 화면 폭에 맞추고, 하단 리스트는 슬라이드 유지 */
+    #admin-tab-parts .erp-layout {
+        gap: 14px;
+    }
+
+    #admin-tab-parts .input-side,
+    #admin-tab-parts .display-side {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    #admin-tab-parts .input-side {
+        overflow-x: visible;
+    }
+
+    #admin-tab-parts form .form-row {
+        flex-wrap: wrap !important;
+        overflow: visible !important;
+        gap: 8px;
+    }
+
+    #admin-tab-parts form .form-row > * {
+        flex: 1 1 150px;
+        min-width: 0;
+    }
+
+    #admin-tab-parts .table-wrap {
+        overflow-x: auto !important;
+        overflow-y: hidden;
+    }
+
+    #admin-tab-parts table.admin-product-table {
+        width: max-content !important;
+        min-width: 620px !important;
+    }
 }
 
 @media screen and (max-width: 640px) {
@@ -382,7 +430,7 @@
     }
 
     #admin-tab-erp .input-side form {
-        min-width: 560px;
+        min-width: 520px;
     }
 
     #admin-tab-erp .form-row {
@@ -403,6 +451,10 @@
         min-width: 132px;
         height: 36px;
         font-size: 12px;
+    }
+
+    #admin-tab-parts table.admin-product-table {
+        min-width: 560px !important;
     }
 
     #admin-tab-erp .form-field > label {
@@ -439,19 +491,16 @@
 
     #sec-admin #admin-tab-rental .rental-search,
     #sec-admin #admin-tab-drivers .search-box,
-    #sec-admin #admin-tab-erp .form-row,
-    #sec-admin #admin-tab-parts .form-row {
+    #sec-admin #admin-tab-erp .form-row {
         display: flex;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
         overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
     }
 
     #sec-admin #admin-tab-rental .rental-search > *,
     #sec-admin #admin-tab-drivers .search-box > *,
-    #sec-admin #admin-tab-erp .form-row > *,
-    #sec-admin #admin-tab-parts .form-row > * {
+    #sec-admin #admin-tab-erp .form-row > * {
         flex: 0 0 auto;
     }
 }
