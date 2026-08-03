@@ -558,6 +558,10 @@
     min-width: 0 !important;
 }
 
+#sec-admin #admin-tab-parts .display-side {
+    align-self: stretch !important;
+}
+
 @media screen and (min-width: 861px) {
     #sec-admin #admin-tab-parts .erp-layout {
         flex-direction: row !important;
@@ -585,7 +589,10 @@
 /* 3) 현재 등록된 부품 판매 리스트 관리 영역이 자식(table)보다 작아지지 않도록 고정 */
 #sec-admin #admin-tab-parts .display-side .sub-title,
 #sec-admin #admin-tab-parts .display-side .table-wrap {
+    display: block !important;
+    width: 100% !important;
     min-width: 100% !important;
+    box-sizing: border-box;
 }
 
 #sec-admin #admin-tab-parts .display-side .table-wrap {
