@@ -279,13 +279,16 @@
     }
 
     .admin-sub-tabs {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
         gap: 8px;
     }
     .sub-tab-btn {
-        flex: 1 1 48%;
+        flex: 0 0 auto;
         min-width: 140px;
         width: auto;
+        white-space: nowrap;
     }
     .admin-sub-header-top {
         flex-direction: column;
@@ -451,11 +454,15 @@
     }
 
     .admin-sub-tabs {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
     }
     .sub-tab-btn {
-        width: 100%;
-        min-width: auto;
+        width: auto;
+        min-width: 132px;
+        white-space: nowrap;
     }
 
     #admin-tab-erp .input-side {
@@ -545,26 +552,27 @@
     }
 }
 
-/* 부품관리: 전체 화면 맞춤 + 리스트 관리는 하단 배치 */
+/* 부품관리: 큰 화면에서는 등록/리스트를 좌우 배치 */
 #admin-tab-parts .erp-layout {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-#admin-tab-parts .input-side,
-#admin-tab-parts .display-side {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-}
-
-#admin-tab-parts .display-side {
-    order: 2;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 #admin-tab-parts .input-side {
+    flex: 1 1 360px;
+    max-width: 430px;
+    min-width: 320px;
     order: 1;
+}
+
+#admin-tab-parts .display-side {
+    flex: 2 1 640px;
+    min-width: 0;
+    width: auto;
+    order: 2;
 }
 
 #admin-tab-parts .display-side .table-wrap {
@@ -575,6 +583,20 @@
 #admin-tab-parts .display-side table.admin-product-table {
     width: max-content;
     min-width: 640px;
+}
+
+@media screen and (max-width: 860px) {
+    #admin-tab-parts .erp-layout {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    #admin-tab-parts .input-side,
+    #admin-tab-parts .display-side {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
 }
 
 @media screen and (max-width: 640px) {

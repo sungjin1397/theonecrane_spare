@@ -15,6 +15,18 @@
     margin-bottom: 20px;
 }
 
+/* 부품관리 리스트 메뉴바: 데스크톱에서도 한 줄 슬라이드 유지 */
+#sec-parts .filter-buttons {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+#sec-parts .filter-btn {
+    flex: 0 0 auto;
+}
+
 .filter-btn {
     padding: 8px 16px;
     font-size: 13px;
