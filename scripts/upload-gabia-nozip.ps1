@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory=$true)][string]$FtpHost,
   [Parameter(Mandatory=$true)][string]$User,
   [Parameter(Mandatory=$false)][string]$RemoteRoot = "/",
-  [Parameter(Mandatory=$false)][string]$LocalRoot = "c:\Users\LG\Desktop\theonecrane_fixed\_gabia_upload"
+  [Parameter(Mandatory=$false)][string]$LocalRoot = ""
 )
 
 $pass = $env:GABIA_FTP_PASS
@@ -14,6 +14,12 @@ if ([string]::IsNullOrWhiteSpace($pass)) {
 $normalizedUser = $User
 if ($normalizedUser -match '^(?:ssh\s+)?([^@\s]+)@([^@\s]+)$') {
   $normalizedUser = $matches[1]
+}
+
+if ([string]::IsNullOrWhiteSpace($LocalRoot)) {
+  $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+  $projectRoot = Split-Path -Parent $scriptRoot
+  $LocalRoot = Join-Path $projectRoot '_gabia_upload'
 }
 
 if (-not (Test-Path $LocalRoot)) {
@@ -37,6 +43,8 @@ if ($files.Count -eq 0) {
 }
 
 Write-Host "[upload] Start: $($files.Count) files"
+Write-Host "[upload] Host: $resolvedHost"
+Write-Host "[upload] Remote root: $remoteBase"
 
 foreach ($file in $files) {
   $relative = $file.FullName.Substring($LocalRoot.Length + 1).Replace('\', '/')
