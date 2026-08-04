@@ -112,7 +112,7 @@ window.__commonShowTab = function (tabId) {
 function initHashNavigation() {
   const syncFromHash = (forceHome = false) => {
     const hash = String(window.location.hash || '').replace('#', '').trim();
-    const shouldForceHome = forceHome || (!hash && !window.isAdminSessionActive?.()) || (hash === 'board' && !window.isAdminSessionActive?.());
+    const shouldForceHome = forceHome || (!hash && !window.isAdminSessionActive?.());
 
     if (shouldForceHome) {
       if (window.location.hash !== '#common') {
