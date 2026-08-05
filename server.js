@@ -397,6 +397,16 @@ app.post('/api/user/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, ke
         return res.status(500).json({ success: false, error: '회원 저장에 실패했습니다.' });
     }
 
+    void sendTelegram(
+`🆕 [신규 회원 등록]
+
+이름 : ${newUser.name}
+연락처 : ${newUser.phone}
+구분 : ${newUser.role}
+기종 : ${newUser.craneType || '-'}
+메모 : ${newUser.memo || '-'}
+등록일 : ${newUser.regDate}`);
+
     return res.json({ success: true, token: buildUserToken(newUser), user: buildUserPayload(newUser), users });
 });
 
@@ -459,6 +469,17 @@ app.put('/api/admin/users/:id/editable', authenticateAdmin, (req, res) => {
 
     if (!saveData('users', users)) {
         return res.status(500).json({ success: false, error: '권한 변경 저장에 실패했습니다.' });
+    }
+
+    if (target.editable) {
+        void sendTelegram(
+`🔐 [회원 정보 수정 권한 부여]
+
+이름 : ${target.name || '-'}
+연락처 : ${target.phone || '-'}
+구분 : ${target.role || '-'}
+권한 : 허용
+처리일 : ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`);
     }
 
     return res.json({ success: true, user: buildUserPayload(target), users });

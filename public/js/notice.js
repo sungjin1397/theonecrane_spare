@@ -60,5 +60,16 @@ window.closeNoticeModal = function () {
   }
 };
 
+function initNoticeModal() {
+  // 첫 진입 시 공지 모달을 자동으로 띄운다.
+  window.checkNoticeModal();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNoticeModal);
+} else {
+  initNoticeModal();
+}
+
 // 안내 내용은 공지·소식 화면에서 필요할 때 확인합니다.
 // 첫 방문 즉시 모달을 띄우면 상담 동선과 서비스 안내를 가리므로 자동 노출하지 않습니다.
