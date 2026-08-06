@@ -256,32 +256,40 @@ app.post('/api/inbox/driver', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), 
 
 const sendTelegram = async (msg) => {
 
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TARGET_CHAT_ID;
 
     try {
 
         if (!token || !chatId) {
             console.log("텔레그램 설정 없음");
-            return;
+            return { ok: false, error: 'TELEGRAM_ENV_MISSING' };
         }
 
-        const result = await axios.post(
+        const response = await axios.post(
             `https://api.telegram.org/bot${token}/sendMessage`,
             {
                 chat_id: chatId,
-                text: msg
+                text: String(msg || '').slice(0, 4000)
+            },
+            {
+                timeout: 10000
             }
         );
 
-        console.log("텔레그램 전송 성공");
+        if (response?.data?.ok !== true) {
+            console.error('텔레그램 실패:', response?.data || 'Unknown API response');
+            return { ok: false, error: response?.data?.description || 'TELEGRAM_API_NOT_OK' };
+        }
 
-    } catch(err){
+        console.log('텔레그램 전송 성공');
+        return { ok: true };
 
-        console.error(
-            "텔레그램 실패:",
-            err.response?.data || err.message
-        );
+    } catch (err) {
+
+        const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
+        console.error('텔레그램 실패:', detail);
+        return { ok: false, error: String(detail) };
 
     }
 };
@@ -357,6 +365,17 @@ app.post('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 8, key: (
         return res.json({ success: true, token: jwt.sign({ role: "admin" }, JWT_SECRET, { algorithm: 'HS256', expiresIn: getAdminTokenTtl(), issuer: 'theonecrane', audience: 'admin' }) });
     }
     return res.status(401).json({ success: false, error: "인증 정보가 올바르지 않습니다." });
+});
+
+app.post('/api/admin/telegram/test', authenticateAdmin, async (req, res) => {
+    const message = cleanText(req.body?.message, 500) || `🧪 [텔레그램 테스트]\n\n시간 : ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
+    const result = await sendTelegram(message);
+
+    if (!result.ok) {
+        return res.status(500).json({ success: false, error: '텔레그램 전송 실패', detail: result.error });
+    }
+
+    return res.json({ success: true, message: '텔레그램 전송 성공' });
 });
 
 app.post('/api/user/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, key: (req) => `user-register:${req.ip}` }), (req, res) => {
