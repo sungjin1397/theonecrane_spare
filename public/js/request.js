@@ -201,21 +201,29 @@ window.handleFormSubmit = async function (e, type) {
         memo
       };
 
+      let serverSaved = false;
       try {
-        await fetch('/api/inbox/request', {
+        const response = await fetch('/api/inbox/request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newItem)
         });
+
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          throw new Error(result?.error || `요청 저장 실패 (HTTP ${response.status})`);
+        }
+
+        serverSaved = true;
       } catch (err) {
-        console.warn("[Request] 오프라인 모드로 저장합니다.", err);
+        console.warn("[Request] 서버 저장 실패. 로컬 임시저장으로 전환합니다.", err);
       }
 
       const list = getSafeStorage('crane_requests');
       list.unshift(newItem);
       setSafeStorage('crane_requests', list);
 
-      safeToast("기사 배치 요청이 성공적으로 접수되었습니다.", "success");
+      safeToast(serverSaved ? "기사 배치 요청이 성공적으로 접수되었습니다." : "서버 접수에 실패하여 이 기기에만 임시 저장되었습니다.", serverSaved ? "success" : "warning");
       if (form && typeof form.reset === 'function') form.reset();
 
       window.renderInboxRequests();
@@ -258,21 +266,29 @@ window.handleFormSubmit = async function (e, type) {
         memo
       };
 
+      let serverSaved = false;
       try {
-        await fetch('/api/inbox/driver', {
+        const response = await fetch('/api/inbox/driver', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newItem)
         });
+
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          throw new Error(result?.error || `요청 저장 실패 (HTTP ${response.status})`);
+        }
+
+        serverSaved = true;
       } catch (err) {
-        console.warn("[Request] 오프라인 모드로 저장합니다.", err);
+        console.warn("[Request] 서버 저장 실패. 로컬 임시저장으로 전환합니다.", err);
       }
 
       const list = getSafeStorage('crane_drivers');
       list.unshift(newItem);
       setSafeStorage('crane_drivers', list);
 
-      safeToast("스페어 기사 신청 등록이 완료되었습니다.", "success");
+      safeToast(serverSaved ? "스페어 기사 신청 등록이 완료되었습니다." : "서버 접수에 실패하여 이 기기에만 임시 저장되었습니다.", serverSaved ? "success" : "warning");
       if (form && typeof form.reset === 'function') form.reset();
 
       window.renderInboxDrivers();
