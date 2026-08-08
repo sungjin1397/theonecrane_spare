@@ -6,7 +6,7 @@
 <meta name="description" content="전국 크레인 스페어 기사 연결, 장비 렌탈 및 정밀 부품 상담을 위한 더원크레인스페어 공식 접수 서비스입니다.">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="./css/common.css?v=20260801g">
-<link rel="stylesheet" href="./css/admin.css?v=20260801g">
+<link rel="stylesheet" href="./css/admin.css?v=20260808a">
 <link rel="stylesheet" href="./css/auth.css?v=20260801g">
 <link rel="stylesheet" href="./css/board.css?v=20260801g">
 <link rel="stylesheet" href="./css/driver.css?v=20260801g">
@@ -312,6 +312,12 @@
                 <label class="board-modal-label" for="boardTitle">제목</label>
                 <input type="text" id="boardTitle" placeholder="제목을 입력하세요" required class="board-modal-input">
             </div>
+            <div class="image-upload-box">
+                <label for="imageUpload" class="image-upload-btn">📷 사진 첨부</label>
+                <input type="file" id="imageUpload" class="image-upload-input" accept="image/*" multiple>
+                <p class="image-upload-guide">최대 3장까지 첨부 가능 (썸네일 클릭 시 확대 보기)</p>
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
             <div class="board-modal-row board-modal-row--textarea">
                 <label class="board-modal-label" for="boardContent">내용</label>
                 <textarea id="boardContent" rows="6" placeholder="내용을 상세히 입력하세요" required class="board-modal-textarea"></textarea>
@@ -350,6 +356,15 @@
             <div class="board-view-modal-footer">
                 <button type="button" onclick="closeBoardViewModal()" class="board-view-modal-button">닫기</button>
             </div>
+        </div>
+    </div>
+    <div id="boardImageModal" class="board-image-modal" onclick="closeBoardImageModal()">
+        <div class="board-image-modal-content">
+            <button type="button" class="board-image-modal-close" onclick="closeBoardImageModal()">✕</button>
+            <button type="button" id="boardImagePrev" class="board-image-modal-nav board-image-modal-nav--prev" aria-label="이전 이미지">‹</button>
+            <img id="boardImageModalImage" class="board-image-modal-image" src="" alt="첨부 이미지 미리보기">
+            <button type="button" id="boardImageNext" class="board-image-modal-nav board-image-modal-nav--next" aria-label="다음 이미지">›</button>
+            <div id="boardImageModalCounter" class="board-image-modal-counter"></div>
         </div>
     </div>
 </section>
@@ -894,7 +909,7 @@
     <script src="./js/notice.js?v=20260801h" defer></script>
     <script src="./js/rental.js?v=20260801h" defer></script>
     <script src="./js/request.js?v=20260801h" defer></script>
-    <script src="./js/admin.js?v=20260801h" defer></script>
+    <script src="./js/admin.js?v=20260808a" defer></script>
     <script src="./js/orders.js?v=20260801h" defer></script>
     <script src="./js/parts.js?v=20260801h" defer></script>
     <script src="./app/user-admin.js?v=20260801h" defer></script>

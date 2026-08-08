@@ -615,17 +615,17 @@
 }
 
 /* ============================================
-   ¿Â¶óÀÎ ¸â¹ö ½Ç½Ã°£ °üÁ¦ ÆÐ³Î
+   ï¿½Â¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ç½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ð³ï¿½
    ============================================ */
 
-/* ¿ìÃø °íÁ¤ Åä±Û ¹öÆ° */
+/* ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½Æ° */
 .online-panel-toggle {
     position: fixed;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 1100;
-    display: none; /* °ü¸®ÀÚ ·Î±×ÀÎ ÈÄ JS·Î Ç¥½Ã */
+    display: none; /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ï¿½ï¿½ ï¿½ï¿½ JSï¿½ï¿½ Ç¥ï¿½ï¿½ */
     flex-direction: column;
     align-items: center;
     gap: 3px;
@@ -644,7 +644,7 @@
 .online-panel-toggle-icon { font-size: 20px; }
 .online-panel-toggle-label { font-weight: 700; letter-spacing: 0.5px; }
 
-/* ¿Â¶óÀÎ Ä«¿îÆ® ¹èÁö */
+/* ï¿½Â¶ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ */
 .online-count-badge {
     position: absolute;
     top: -6px;
@@ -663,7 +663,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* ½½¶óÀÌµù ÆÐ³Î */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½Ìµï¿½ ï¿½Ð³ï¿½ */
 .online-member-panel {
     position: fixed;
     right: -280px;
@@ -719,7 +719,7 @@
     text-align: center;
 }
 
-/* ±â»ç °³º° Ç×¸ñ */
+/* ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ */
 .online-driver-item {
     display: flex;
     align-items: center;
@@ -741,6 +741,7 @@
     transition: background 0.2s;
 }
 .online-indicator--on  { background: #22c55e; color: #22c55e; }
+.online-indicator--auto { background: #38bdf8; color: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.9); }
 .online-indicator--off { background: #475569; color: #475569; box-shadow: none; }
 
 .online-driver-info { flex: 1; min-width: 0; }
@@ -767,10 +768,11 @@
     flex-shrink: 0;
 }
 .online-driver-status-label--on  { background: #166534; color: #86efac; }
+.online-driver-status-label--auto { background: #0c4a6e; color: #7dd3fc; }
 .online-driver-status-label--off { background: #1e293b; color: #64748b; }
 
 /* ============================================
-   ¹èÂ÷ ¿À´õ »óÅÂ ¹èÁö
+   ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    ============================================ */
 .dispatch-badge {
     display: inline-flex;

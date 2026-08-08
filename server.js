@@ -1,8 +1,7 @@
-// 어느 폴더에서 실행해도 프로젝트 폴더의 .env를 읽도록 경로 고정
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
+const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -22,6 +21,21 @@ const FALLBACK_ADMIN_PASSWORDS = [
 ].filter(Boolean);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://theonecrane.kr,https://www.theonecrane.kr,http://localhost:3001,http://127.0.0.1:3001';
+const BOARD_MAX_IMAGES = 3;
+const BOARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const BOARD_ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const TELEGRAM_CONFIG_PATH = path.join(DATA_DIR, 'telegram.config.json');
+
+const dotenvCandidates = [
+    path.join(__dirname, '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '..', '.env')
+];
+for (const candidate of dotenvCandidates) {
+    if (!candidate || !fs.existsSync(candidate)) continue;
+    dotenv.config({ path: candidate, override: false });
+    break;
+}
 
 function getAllowedOrigins() {
     return (CORS_ORIGIN || '')
@@ -66,9 +80,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false
 }));
-app.use(express.json({ limit: '32kb', strict: true }));
-app.use(express.text({ type: ['text/plain'], limit: '32kb' }));
-app.use(express.urlencoded({ extended: false, limit: '32kb' }));
+app.use(express.json({ limit: '8mb', strict: true }));
+app.use(express.text({ type: ['text/plain'], limit: '128kb' }));
+app.use(express.urlencoded({ extended: false, limit: '8mb' }));
 // Always revalidate static assets so urgent customer-facing fixes are not hidden by a stale browser cache.
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html', maxAge: 0, etag: true }));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
@@ -102,6 +116,121 @@ function cleanText(value, maxLength = 500) {
 
 function cleanPhone(value) {
     return cleanText(value, 30).replace(/[^0-9+\-() ]/g, '');
+}
+
+function normalizePhone(value) {
+    return String(value || '').replace(/[^0-9]/g, '').trim();
+}
+
+function extractDriverPhones(driver) {
+    const set = new Set();
+
+    const collect = (value) => {
+        if (!value) return;
+        if (Array.isArray(value)) {
+            value.forEach(collect);
+            return;
+        }
+        if (typeof value === 'object') {
+            Object.values(value).forEach(collect);
+            return;
+        }
+        const phone = normalizePhone(value);
+        if (phone.length >= 9) set.add(phone);
+    };
+
+    if (driver && typeof driver === 'object') {
+        collect(driver.tel);
+        collect(driver.phone);
+        collect(driver.mobile);
+        collect(driver.contactTel);
+        collect(driver.contactPhone);
+        collect(driver.driverTel);
+        collect(driver.driverPhone);
+        collect(driver.user?.phone);
+    }
+
+    return Array.from(set);
+}
+
+function getRecentOnlinePhones() {
+    const cutoff = Date.now() - 15 * 60 * 1000;
+    const onlinePhones = new Set();
+
+    for (const session of visitorSessions.values()) {
+        const lastSeen = new Date(session?.lastSeenAt || 0).getTime();
+        const phone = normalizePhone(session?.phone);
+        if (!phone || !Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
+        onlinePhones.add(phone);
+    }
+
+    return onlinePhones;
+}
+
+function readTelegramConfig() {
+    try {
+        if (!fs.existsSync(TELEGRAM_CONFIG_PATH)) return null;
+        const raw = fs.readFileSync(TELEGRAM_CONFIG_PATH, 'utf8').trim();
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (err) {
+        console.warn('[Telegram] telegram.config.json 파싱 실패:', err.message);
+        return null;
+    }
+}
+
+function getTelegramCredentials() {
+    const fileConfig = readTelegramConfig() || {};
+    const token = String(
+        process.env.TELEGRAM_BOT_TOKEN
+        || process.env.TELEGRAM_TOKEN
+        || process.env.TG_BOT_TOKEN
+        || fileConfig.botToken
+        || fileConfig.token
+        || ''
+    ).trim();
+
+    const chatId = String(
+        process.env.TELEGRAM_CHAT_ID
+        || process.env.TELEGRAM_TARGET_CHAT_ID
+        || process.env.TG_CHAT_ID
+        || process.env.TELEGRAM_CHATID
+        || fileConfig.chatId
+        || fileConfig.targetChatId
+        || ''
+    ).trim();
+
+    return { token, chatId };
+}
+
+function sanitizeBoardImages(images) {
+    if (!Array.isArray(images)) return [];
+
+    const sanitized = [];
+    for (const raw of images) {
+        if (sanitized.length >= BOARD_MAX_IMAGES) break;
+        if (!raw || typeof raw !== 'object') continue;
+
+        const rawData = typeof raw.data === 'string' ? raw.data.trim() : '';
+        const match = rawData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/);
+        if (!match) continue;
+
+        const mimeType = String(match[1] || '').toLowerCase();
+        if (!BOARD_ALLOWED_IMAGE_TYPES.has(mimeType)) continue;
+
+        const base64Data = match[2] || '';
+        const byteSize = Buffer.byteLength(base64Data, 'base64');
+        if (!Number.isFinite(byteSize) || byteSize <= 0 || byteSize > BOARD_MAX_IMAGE_BYTES) continue;
+
+        sanitized.push({
+            name: cleanText(raw.name || `image-${sanitized.length + 1}`, 120),
+            type: mimeType,
+            data: `data:${mimeType};base64,${base64Data}`
+        });
+    }
+
+    return sanitized;
 }
 
 function buildUserPayload(user) {
@@ -209,7 +338,7 @@ app.post('/api/inbox/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }),
     inbox.push(newReq);
     if (!saveData('inbox_req', inbox)) return res.status(500).json({ success: false, error: '접수 저장에 실패했습니다.' });
 
-    sendTelegram(
+    void sendTelegram(
     `🔔 [신규 배치 문의]
 
     회사 : ${newReq.company}
@@ -217,7 +346,8 @@ app.post('/api/inbox/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }),
     연락처 : ${newReq.tel}
     차종 : ${newReq.type}
     내용 : ${newReq.memo}
-    접수시간 : ${newReq.time}`
+    접수시간 : ${newReq.time}`,
+    'INBOX_REQUEST'
     );
 
     res.json({ success: true });
@@ -241,7 +371,7 @@ app.post('/api/inbox/driver', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), 
     inbox.push(newDrv);
     if (!saveData('inbox_drv', inbox)) return res.status(500).json({ success: false, error: '접수 저장에 실패했습니다.' });
 
-    sendTelegram(
+    void sendTelegram(
     `🚚 [신규 기사 신청]
 
     성함 : ${newDrv.name}
@@ -249,46 +379,60 @@ app.post('/api/inbox/driver', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), 
     기종 : ${newDrv.type}
     자격증 : ${newDrv.cert}
     메모 : ${newDrv.memo}
-    접수시간 : ${newDrv.time}`
+    접수시간 : ${newDrv.time}`,
+    'INBOX_DRIVER'
     );
     res.json({ success: true });
 });
 
-const sendTelegram = async (msg) => {
+let telegramMissingConfigLogged = false;
+const sendTelegram = async (msg, context = 'GENERAL') => {
 
-    const token = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TARGET_CHAT_ID;
+    const { token, chatId } = getTelegramCredentials();
 
     try {
 
         if (!token || !chatId) {
-            console.log("텔레그램 설정 없음");
+            if (!telegramMissingConfigLogged) {
+                telegramMissingConfigLogged = true;
+                console.error('[Telegram] 설정값이 없어 전송을 건너뜁니다. TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 또는 data/telegram.config.json을 확인하세요.');
+            }
             return { ok: false, error: 'TELEGRAM_ENV_MISSING' };
         }
 
-        const response = await axios.post(
-            `https://api.telegram.org/bot${token}/sendMessage`,
-            {
-                chat_id: chatId,
-                text: String(msg || '').slice(0, 4000)
-            },
-            {
-                timeout: 10000
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+            try {
+                const response = await axios.post(
+                    `https://api.telegram.org/bot${token}/sendMessage`,
+                    {
+                        chat_id: chatId,
+                        text: String(msg || '').slice(0, 4000)
+                    },
+                    {
+                        timeout: 10000
+                    }
+                );
+
+                if (response?.data?.ok !== true) {
+                    console.error(`[Telegram] 실패 (${context})`, response?.data || 'Unknown API response');
+                    return { ok: false, error: response?.data?.description || 'TELEGRAM_API_NOT_OK' };
+                }
+
+                return { ok: true };
+            } catch (err) {
+                const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
+                if (attempt >= 2) {
+                    console.error(`[Telegram] 실패 (${context})`, detail);
+                    return { ok: false, error: String(detail) };
+                }
             }
-        );
-
-        if (response?.data?.ok !== true) {
-            console.error('텔레그램 실패:', response?.data || 'Unknown API response');
-            return { ok: false, error: response?.data?.description || 'TELEGRAM_API_NOT_OK' };
         }
-
-        console.log('텔레그램 전송 성공');
-        return { ok: true };
+        return { ok: false, error: 'TELEGRAM_UNKNOWN_ERROR' };
 
     } catch (err) {
 
         const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
-        console.error('텔레그램 실패:', detail);
+        console.error(`[Telegram] 실패 (${context})`, detail);
         return { ok: false, error: String(detail) };
 
     }
@@ -369,7 +513,7 @@ app.post('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 8, key: (
 
 app.post('/api/admin/telegram/test', authenticateAdmin, async (req, res) => {
     const message = cleanText(req.body?.message, 500) || `🧪 [텔레그램 테스트]\n\n시간 : ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
-    const result = await sendTelegram(message);
+    const result = await sendTelegram(message, 'ADMIN_TEST');
 
     if (!result.ok) {
         return res.status(500).json({ success: false, error: '텔레그램 전송 실패', detail: result.error });
@@ -424,7 +568,8 @@ app.post('/api/user/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, ke
 구분 : ${newUser.role}
 기종 : ${newUser.craneType || '-'}
 메모 : ${newUser.memo || '-'}
-등록일 : ${newUser.regDate}`);
+등록일 : ${newUser.regDate}`,
+'USER_REGISTER');
 
     return res.json({ success: true, token: buildUserToken(newUser), user: buildUserPayload(newUser), users });
 });
@@ -498,7 +643,8 @@ app.put('/api/admin/users/:id/editable', authenticateAdmin, (req, res) => {
 연락처 : ${target.phone || '-'}
 구분 : ${target.role || '-'}
 권한 : 허용
-처리일 : ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`);
+처리일 : ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`,
+'USER_EDITABLE_GRANTED');
     }
 
     return res.json({ success: true, user: buildUserPayload(target), users });
@@ -602,21 +748,15 @@ app.get('/api/products', (req, res) => {
 
 app.get('/api/drivers-pool', authenticateAdmin, (req, res) => {
     const pool = readData('drivers_pool');
-    const cutoff = Date.now() - 15 * 60 * 1000;
-
-    // 활성 세션의 전화번호 목록 (숫자만 추출해 정규화)
-    const onlinePhones = new Set();
-    for (const session of visitorSessions.values()) {
-        if (session.phone && new Date(session.lastSeenAt).getTime() >= cutoff) {
-            onlinePhones.add(String(session.phone).replace(/[^0-9]/g, ''));
-        }
-    }
+    const onlinePhones = getRecentOnlinePhones();
 
     const result = pool.map(d => {
-        const driverPhone = String(d.tel || '').replace(/[^0-9]/g, '');
-        // 실제 접속 세션이 있으면 자동 ON, 없으면 수동 저장값 사용
-        const isOnline = (driverPhone && onlinePhones.has(driverPhone)) || !!d.isOnline;
-        return { ...d, isOnline };
+        const driverPhones = extractDriverPhones(d);
+        const hasActiveSession = driverPhones.some(phone => onlinePhones.has(phone));
+        const manualOnline = Boolean(d.manualOnline ?? d.isOnline ?? false);
+        const isOnline = hasActiveSession || manualOnline;
+        const onlineSource = hasActiveSession ? 'AUTO' : (manualOnline ? 'MANUAL' : 'OFF');
+        return { ...d, manualOnline, isOnline, onlineSource };
     });
 
     res.json(result);
@@ -803,9 +943,23 @@ app.put('/api/admin/drivers-pool/:id/online', authenticateAdmin, (req, res) => {
     let pool = readData('drivers_pool');
     const driver = pool.find(d => String(d.id) === String(req.params.id));
     if (!driver) return res.status(404).json({ success: false, error: '기사를 찾을 수 없습니다.' });
-    driver.isOnline = !driver.isOnline;
+
+    const onlinePhones = getRecentOnlinePhones();
+    const hasActiveSession = extractDriverPhones(driver).some(phone => onlinePhones.has(phone));
+    if (hasActiveSession) {
+        return res.status(409).json({
+            success: false,
+            error: '현재 기사님이 로그인 중이라 자동 ON 상태입니다. 기사 로그아웃 후 수동 변경해 주세요.'
+        });
+    }
+
+    const currentManual = Boolean(driver.manualOnline ?? driver.isOnline ?? false);
+    driver.manualOnline = !currentManual;
+    // 이전 데이터/화면 호환을 위해 isOnline도 함께 맞춘다.
+    driver.isOnline = driver.manualOnline;
+
     if (!saveData('drivers_pool', pool)) return res.status(500).json({ success: false });
-    res.json({ success: true, isOnline: driver.isOnline });
+    res.json({ success: true, isOnline: driver.isOnline, manualOnline: driver.manualOnline, onlineSource: 'MANUAL' });
 });
 
 // ==========================================
@@ -828,6 +982,7 @@ app.post('/api/board', authenticateAdmin, (req, res) => {
         content: cleanText(req.body.content, 5000),
         category: cleanText(req.body.category || 'GENERAL', 30),
         isPinned: Boolean(req.body.isPinned),
+        images: sanitizeBoardImages(req.body.images),
         views: 0,
         createdAt: new Date().toLocaleString('ko-KR', {
             timeZone: 'Asia/Seoul'
@@ -987,7 +1142,7 @@ app.post('/api/rental/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })
     rentalReqData.push(newReq);
     if (!saveData('rental_req', rentalReqData)) return res.status(500).json({ success: false, error: '접수 저장에 실패했습니다.' });
     
-    sendTelegram(
+    void sendTelegram(
 `🏗️ [크레인 렌탈 요청]
 
 상호 : ${newReq.company}
@@ -995,7 +1150,8 @@ app.post('/api/rental/request', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })
 연락처 : ${newReq.tel}
 요청장비 : ${newReq.type}
 상세내용 : ${newReq.memo}
-접수시간 : ${newReq.time}`);
+접수시간 : ${newReq.time}`,
+'RENTAL_REQUEST');
     res.json({ success: true, message: '렌탈 요청이 접수되었습니다.' });
 });
 
@@ -1015,7 +1171,7 @@ app.post('/api/rental/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }
     rentalRegData.push(newReg);
     if (!saveData('rental_reg', rentalRegData)) return res.status(500).json({ success: false, error: '등록 저장에 실패했습니다.' });
     
-    sendTelegram(
+    void sendTelegram(
 `🚚 [렌탈 차주 등록]
 
 차주 : ${newReg.name}
@@ -1023,7 +1179,8 @@ app.post('/api/rental/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }
 보유장비 : ${newReg.type}
 지역 : ${newReg.loc}
 메모 : ${newReg.memo}
-접수시간 : ${newReg.time}`
+접수시간 : ${newReg.time}`,
+'RENTAL_REGISTER'
 );
     res.json({ success: true, message: '렌탈 차주 등록이 완료되었습니다.' });
 });

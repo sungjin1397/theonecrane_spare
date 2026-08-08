@@ -904,10 +904,18 @@ window.refreshOnlinePanel = async function () {
       const safeType  = window.escapeHtml(d.type || d.craneType || '-');
       const safeId    = encodeURIComponent(String(d.id || ''));
       const isOn      = !!d.isOnline;
-      const indCls    = isOn ? 'online-indicator--on'           : 'online-indicator--off';
-      const labelCls  = isOn ? 'online-driver-status-label--on' : 'online-driver-status-label--off';
-      const labelText = isOn ? 'ON' : 'OFF';
-      return `<div class="online-driver-item" onclick="window.toggleDriverOnline('${safeId}')" title="클릭하면 ON/OFF 전환">
+      const source    = String(d.onlineSource || '').toUpperCase();
+      const isAuto    = source === 'AUTO';
+      const isManualOn = isOn && !isAuto;
+      const indCls = isAuto
+        ? 'online-indicator--auto'
+        : (isManualOn ? 'online-indicator--on' : 'online-indicator--off');
+      const labelCls = isAuto
+        ? 'online-driver-status-label--auto'
+        : (isManualOn ? 'online-driver-status-label--on' : 'online-driver-status-label--off');
+      const labelText = isOn ? (isAuto ? 'AUTO ON' : 'ON') : 'OFF';
+      const titleText = isAuto ? '접속 세션으로 자동 ON 상태' : '클릭하면 수동 ON/OFF 전환';
+      return `<div class="online-driver-item" onclick="window.toggleDriverOnline('${safeId}')" title="${titleText}">
         <span class="online-indicator ${indCls}"></span>
         <div class="online-driver-info">
           <div class="online-driver-name">${safeName}</div>
@@ -930,11 +938,19 @@ window.toggleDriverOnline = async function (encodedId) {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const result = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        window.safeToast?.(result.error || '자동 ON 상태에서는 수동 변경할 수 없습니다.', 'warning');
+        await window.refreshOnlinePanel();
+        return;
+      }
+      throw new Error(result.error || `HTTP ${res.status}`);
+    }
     await window.refreshOnlinePanel();
   } catch (err) {
     console.error('[OnlinePanel] 상태 변경 실패:', err);
-    window.safeToast?.('온라인 상태 변경에 실패했습니다.', 'error');
+    window.safeToast?.(err.message || '온라인 상태 변경에 실패했습니다.', 'error');
   }
 };
 
@@ -944,7 +960,21 @@ window.startOnlinePanelPolling = function () {
   if (toggle) toggle.style.display = 'flex';
   window.refreshOnlinePanel();
   if (_onlinePanelRefreshTimer) clearInterval(_onlinePanelRefreshTimer);
-  _onlinePanelRefreshTimer = setInterval(window.refreshOnlinePanel, 30000);
+  _onlinePanelRefreshTimer = setInterval(window.refreshOnlinePanel, 10000);
+
+  if (!window.__onlinePanelFocusBound) {
+    window.__onlinePanelFocusBound = true;
+    window.addEventListener('focus', () => {
+      if (window.isAdminSessionActive?.()) {
+        window.refreshOnlinePanel();
+      }
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && window.isAdminSessionActive?.()) {
+        window.refreshOnlinePanel();
+      }
+    });
+  }
 };
 
 window.stopOnlinePanelPolling = function () {

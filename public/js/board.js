@@ -3,6 +3,27 @@
    ========================================== */
 
 let currentViewingPostId = null;
+const BOARD_MAX_IMAGES = 3;
+
+function normalizePostImages(images) {
+  if (!Array.isArray(images)) return [];
+
+  return images
+    .slice(0, BOARD_MAX_IMAGES)
+    .map((image, index) => {
+      if (!image || typeof image !== 'object') return null;
+      const data = typeof image.data === 'string' ? image.data.trim() : '';
+      if (!/^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/.test(data)) return null;
+      const type = typeof image.type === 'string' && image.type.startsWith('image/')
+        ? image.type
+        : 'image/jpeg';
+      const name = typeof image.name === 'string' && image.name.trim()
+        ? image.name.trim().slice(0, 120)
+        : `image-${index + 1}.jpg`;
+      return { name, type, data };
+    })
+    .filter(Boolean);
+}
 
 // 🔒 1. XSS 방지 HTML 소독 함수
 function escapeHtml(str) {
@@ -94,7 +115,8 @@ window.fetchBoardPostsFromApi = async function () {
       date: formatBoardDate(post.createdAt || post.date),
       views: Number(post.views || 0),
       content: post.content || '',
-      isPinned: Boolean(post.isPinned)
+      isPinned: Boolean(post.isPinned),
+      images: normalizePostImages(post.images)
     }));
   } catch (err) {
     console.warn('게시판 API 불러오기 실패:', err);
@@ -129,7 +151,8 @@ window.mergeBoardPostsWithStoredData = function (apiPosts, storedPosts = window.
       date: post.date || post.createdAt || storedPost?.date || '',
       views: Number(storedPost?.views ?? post.views ?? 0),
       content: post.content || storedPost?.content || '',
-      isPinned: Boolean(post.isPinned ?? storedPost?.isPinned ?? false)
+      isPinned: Boolean(post.isPinned ?? storedPost?.isPinned ?? false),
+      images: normalizePostImages(post.images || storedPost?.images)
     };
   });
 
@@ -346,6 +369,9 @@ window.closeBoardWriteModal = function () {
   if (titleElem) titleElem.value = '';
   if (contentElem) contentElem.value = '';
   if (pinnedCheckbox) pinnedCheckbox.checked = false;
+
+  selectedImages = [];
+  renderImagePreview();
 };
 
 // 게시글 작성 제출 처리 (공지고정 및 작성자 검증)
@@ -380,6 +406,8 @@ window.handleBoardSubmit = async function (e) {
     return;
   }
 
+  const attachedImages = normalizePostImages(selectedImages);
+
   try {
     const now = new Date();
     const dateString = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
@@ -391,7 +419,8 @@ window.handleBoardSubmit = async function (e) {
       date: dateString,
       views: 0,
       content,
-      isPinned: isAdmin && (category === 'NOTICE' || isPinnedChecked)
+      isPinned: isAdmin && (category === 'NOTICE' || isPinnedChecked),
+      images: attachedImages
     };
 
     let currentPosts = getBoardPosts();
@@ -418,7 +447,8 @@ window.handleBoardSubmit = async function (e) {
               content,
               writer: author,
               category,
-              isPinned: newPost.isPinned
+              isPinned: newPost.isPinned,
+              images: attachedImages
             })
           });
           if (response.ok) {
@@ -432,7 +462,8 @@ window.handleBoardSubmit = async function (e) {
                 date: formatBoardDate(result.data.createdAt || dateString),
                 views: 0,
                 content: result.data.content,
-                isPinned: Boolean(result.data.isPinned || newPost.isPinned)
+                isPinned: Boolean(result.data.isPinned || newPost.isPinned),
+                images: normalizePostImages(result.data.images || attachedImages)
               };
               currentPosts[0] = savedPost;
               localStorage.setItem('crane_board_posts', JSON.stringify(currentPosts));
@@ -490,12 +521,40 @@ window.openBoardViewModal = async function (id) {
   const authorElem = document.getElementById('viewModalAuthor');
   const dateElem = document.getElementById('viewModalDate');
   const contentElem = document.getElementById('viewModalContent');
+  const postImages = normalizePostImages(post.images);
 
   if (badgeElem) badgeElem.innerText = (post.category === 'NOTICE' || post.isPinned) ? '📢 공지사항' : '💬 일반글';
   if (titleElem) titleElem.innerText = post.title;
   if (authorElem) authorElem.innerText = `작성자: ${post.author}`;
   if (dateElem) dateElem.innerText = `등록일: ${post.date}`;
-  if (contentElem) contentElem.innerText = post.content;
+  if (contentElem) {
+    const safeContent = escapeHtml(post.content || '').replace(/\n/g, '<br>');
+    const imageGridClass = `post-images count-${Math.min(postImages.length, BOARD_MAX_IMAGES)}`;
+    const imagesHtml = postImages.length
+      ? `
+        <div class="${imageGridClass}">
+          ${postImages.map((image, index) => `
+            <button type="button" class="post-image-trigger" data-image-index="${index}" aria-label="첨부 이미지 ${index + 1} 열기">
+              <img src="${image.data}" alt="첨부 이미지 ${index + 1}" class="post-image">
+            </button>
+          `).join('')}
+        </div>
+      `
+      : '';
+
+    contentElem.innerHTML = `
+      <div class="board-view-text">${safeContent}</div>
+      ${imagesHtml}
+    `;
+
+    const imageButtons = contentElem.querySelectorAll('.post-image-trigger');
+    imageButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const index = Number(button.getAttribute('data-image-index') || '0');
+        window.openBoardImageModal(postImages, index);
+      });
+    });
+  }
 
   const isAdmin = sessionStorage.getItem('is_admin_logged_in') === 'true';
   const adminActions = document.getElementById('viewModalAdminActions');
@@ -588,4 +647,194 @@ document.addEventListener('DOMContentLoaded', () => {
   // 상세 모달의 '공지 고정' 버튼 배선 (기존에는 핸들러가 없어 클릭해도 무동작)
   const pinBtn = document.getElementById('btnToggleNotice');
   if (pinBtn) pinBtn.addEventListener('click', window.toggleCurrentPostPinned);
+
+  const imageModalContent = document.querySelector('#boardImageModal .board-image-modal-content');
+  if (imageModalContent) {
+    imageModalContent.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  const prevBtn = document.getElementById('boardImagePrev');
+  const nextBtn = document.getElementById('boardImageNext');
+  if (prevBtn) prevBtn.addEventListener('click', () => window.moveBoardImageModal(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => window.moveBoardImageModal(1));
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      window.closeBoardImageModal();
+      return;
+    }
+    const modal = document.getElementById('boardImageModal');
+    if (!modal || modal.style.display !== 'flex') return;
+    if (event.key === 'ArrowLeft') window.moveBoardImageModal(-1);
+    if (event.key === 'ArrowRight') window.moveBoardImageModal(1);
+  });
 });
+
+// ========================================
+// 게시글 사진 첨부 / 미리보기
+// ========================================
+
+let selectedImages = [];
+let boardImageModalState = { images: [], index: 0 };
+
+const imageUpload = document.getElementById("imageUpload");
+const imagePreview = document.getElementById("imagePreview");
+
+if (imageUpload) {
+    imageUpload.addEventListener("change", function (event) {
+
+        const files = Array.from(event.target.files || []);
+        const remainingSlots = BOARD_MAX_IMAGES - selectedImages.length;
+
+        if (remainingSlots <= 0) {
+            safeToast(`사진은 최대 ${BOARD_MAX_IMAGES}장까지 첨부할 수 있습니다.`, "warning");
+            imageUpload.value = "";
+            return;
+        }
+
+        if (files.length > remainingSlots) {
+            safeToast(`사진은 최대 ${BOARD_MAX_IMAGES}장까지 첨부할 수 있습니다.`, "warning");
+        }
+
+        const targetFiles = files.slice(0, remainingSlots);
+
+        targetFiles.forEach(file => {
+
+            if (!file.type.startsWith("image/")) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                const imageData = {
+                    name: file.name,
+                    type: file.type,
+                    data: e.target.result
+                };
+
+                selectedImages.push(imageData);
+
+                renderImagePreview();
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // 같은 파일 다시 선택 가능하도록 초기화
+        imageUpload.value = "";
+    });
+}
+
+
+// ========================================
+// 사진 미리보기 출력
+// ========================================
+
+function renderImagePreview() {
+
+    if (!imagePreview) return;
+
+    imagePreview.innerHTML = "";
+  imagePreview.classList.remove('count-1', 'count-2', 'count-3');
+
+  const count = Math.min(selectedImages.length, BOARD_MAX_IMAGES);
+  if (count > 0) {
+    imagePreview.classList.add(`count-${count}`);
+  }
+
+    selectedImages.forEach((image, index) => {
+
+        const wrapper = document.createElement("div");
+
+        wrapper.className = "image-preview-item";
+
+        wrapper.innerHTML = `
+          <img src="${image.data}" alt="첨부사진 ${index + 1}" class="image-preview-thumb">
+
+            <button
+                type="button"
+                class="image-remove-btn"
+                onclick="removeSelectedImage(${index})"
+            >
+                ×
+            </button>
+        `;
+
+        const previewImage = wrapper.querySelector('.image-preview-thumb');
+        if (previewImage) {
+          previewImage.addEventListener('click', () => {
+            window.openBoardImageModal(selectedImages, index);
+          });
+        }
+
+        imagePreview.appendChild(wrapper);
+    });
+}
+
+
+// ========================================
+// 선택한 사진 삭제
+// ========================================
+
+function removeSelectedImage(index) {
+
+    selectedImages.splice(index, 1);
+
+    renderImagePreview();
+}
+
+window.openBoardImageModal = function (images, index = 0) {
+  const modal = document.getElementById('boardImageModal');
+  const imageElem = document.getElementById('boardImageModalImage');
+  const counterElem = document.getElementById('boardImageModalCounter');
+
+  const normalized = normalizePostImages(images);
+  if (!modal || !imageElem || !counterElem || !normalized.length) return;
+
+  const safeIndex = Math.max(0, Math.min(Number(index) || 0, normalized.length - 1));
+  boardImageModalState = { images: normalized, index: safeIndex };
+
+  const current = normalized[safeIndex];
+  imageElem.src = current.data;
+  imageElem.alt = `첨부 이미지 ${safeIndex + 1}`;
+  counterElem.textContent = `${safeIndex + 1} / ${normalized.length}`;
+
+  const navVisible = normalized.length > 1;
+  const prevBtn = document.getElementById('boardImagePrev');
+  const nextBtn = document.getElementById('boardImageNext');
+  if (prevBtn) prevBtn.style.display = navVisible ? 'inline-flex' : 'none';
+  if (nextBtn) nextBtn.style.display = navVisible ? 'inline-flex' : 'none';
+
+  modal.style.display = 'flex';
+};
+
+window.moveBoardImageModal = function (delta) {
+  const modal = document.getElementById('boardImageModal');
+  if (!modal || modal.style.display !== 'flex') return;
+
+  const images = boardImageModalState.images || [];
+  if (!images.length) return;
+
+  const currentIndex = Number(boardImageModalState.index || 0);
+  const nextIndex = (currentIndex + Number(delta) + images.length) % images.length;
+  window.openBoardImageModal(images, nextIndex);
+};
+
+window.closeBoardImageModal = function () {
+  const modal = document.getElementById('boardImageModal');
+  const imageElem = document.getElementById('boardImageModalImage');
+  const counterElem = document.getElementById('boardImageModalCounter');
+
+  if (modal) modal.style.display = 'none';
+  if (imageElem) {
+    imageElem.src = '';
+    imageElem.alt = '첨부 이미지 미리보기';
+  }
+  if (counterElem) counterElem.textContent = '';
+
+  boardImageModalState = { images: [], index: 0 };
+};
