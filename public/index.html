@@ -737,6 +737,22 @@
             </div>
         </div>
     </div>
+
+    <!-- 온라인 멤버 실시간 관제 패널 -->
+    <button id="online-panel-toggle" class="online-panel-toggle" onclick="toggleOnlinePanel()" type="button" aria-label="기사 접속 상태 패널 열기">
+      <span id="online-count-badge" class="online-count-badge">0</span>
+      <span class="online-panel-toggle-icon">👷</span>
+      <span class="online-panel-toggle-label">ON/OFF</span>
+    </button>
+    <aside id="online-member-panel" class="online-member-panel" aria-label="기사 접속 상태 관제창">
+      <div class="online-panel-header">
+        <span>🟢 스페어 기사 접속 상태</span>
+        <button type="button" class="online-panel-close" onclick="toggleOnlinePanel()" aria-label="패널 닫기">✕</button>
+      </div>
+      <div id="online-member-list" class="online-member-list">
+        <p class="online-panel-placeholder">로딩 중...</p>
+      </div>
+    </aside>
 </section>
 
 <div id="privacyModal" class="modal-overlay" onclick="closePrivacyModal()">

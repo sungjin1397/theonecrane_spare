@@ -122,6 +122,9 @@ window.handleLoginSuccess = function () {
   if (typeof window.showTab === 'function') {
     window.showTab('admin');
   }
+  if (typeof window.startOnlinePanelPolling === 'function') {
+    window.startOnlinePanelPolling();
+  }
 };
 
 // 3. 로그아웃 처리
@@ -165,6 +168,9 @@ window.checkAdminSession = function () {
     if (typeof window.renderAdminUsers === 'function') {
       window.renderAdminUsers();
     }
+    if (typeof window.startOnlinePanelPolling === 'function') {
+      window.startOnlinePanelPolling();
+    }
   } else {
     if (lockBox) lockBox.style.display = 'block';
     if (adminSubHeader) adminSubHeader.style.display = 'none';
@@ -172,6 +178,9 @@ window.checkAdminSession = function () {
     adminPanes.forEach((pane) => {
       pane.style.display = 'none';
     });
+    if (typeof window.stopOnlinePanelPolling === 'function') {
+      window.stopOnlinePanelPolling();
+    }
   }
 };
 

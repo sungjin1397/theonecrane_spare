@@ -765,6 +765,15 @@ app.delete('/api/admin/pool/:id', authenticateAdmin, (req,res)=>{
     res.json({ success:true });
 });
 
+app.put('/api/admin/drivers-pool/:id/online', authenticateAdmin, (req, res) => {
+    let pool = readData('drivers_pool');
+    const driver = pool.find(d => String(d.id) === String(req.params.id));
+    if (!driver) return res.status(404).json({ success: false, error: '기사를 찾을 수 없습니다.' });
+    driver.isOnline = !driver.isOnline;
+    if (!saveData('drivers_pool', pool)) return res.status(500).json({ success: false });
+    res.json({ success: true, isOnline: driver.isOnline });
+});
+
 // ==========================================
 // 게시판 API
 // ==========================================

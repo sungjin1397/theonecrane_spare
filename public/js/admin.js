@@ -863,3 +863,97 @@ if (document.readyState === 'loading') {
 } else {
   initAdminModule();
 }
+
+// =============================================================
+// 🟢 온라인 멤버 실시간 관제 패널
+// =============================================================
+
+let _onlinePanelRefreshTimer = null;
+
+window.toggleOnlinePanel = function () {
+  const panel = document.getElementById('online-member-panel');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('is-open');
+  if (isOpen) window.refreshOnlinePanel();
+};
+
+window.refreshOnlinePanel = async function () {
+  const list  = document.getElementById('online-member-list');
+  const badge = document.getElementById('online-count-badge');
+  if (!list) return;
+
+  const token = window.getAdminToken?.() || '';
+  if (!token || !window.isAdminSessionActive?.()) return;
+
+  try {
+    const res = await fetch('/api/drivers-pool', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const pool = await res.json();
+    const drivers = Array.isArray(pool) ? pool : [];
+
+    const onlineCount = drivers.filter(d => d.isOnline).length;
+    if (badge) badge.textContent = onlineCount;
+
+    if (drivers.length === 0) {
+      list.innerHTML = '<p class="online-panel-placeholder">등록된 기사가 없습니다.</p>';
+      return;
+    }
+
+    list.innerHTML = drivers.map(d => {
+      const safeName  = window.escapeHtml(d.name || '-');
+      const safeType  = window.escapeHtml(d.type || d.craneType || '-');
+      const safeId    = encodeURIComponent(String(d.id || ''));
+      const isOn      = !!d.isOnline;
+      const indCls    = isOn ? 'online-indicator--on'           : 'online-indicator--off';
+      const labelCls  = isOn ? 'online-driver-status-label--on' : 'online-driver-status-label--off';
+      const labelText = isOn ? 'ON' : 'OFF';
+      return `<div class="online-driver-item" onclick="window.toggleDriverOnline('${safeId}')" title="클릭하면 ON/OFF 전환">
+        <span class="online-indicator ${indCls}"></span>
+        <div class="online-driver-info">
+          <div class="online-driver-name">${safeName}</div>
+          <div class="online-driver-type">${safeType}</div>
+        </div>
+        <span class="online-driver-status-label ${labelCls}">${labelText}</span>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('[OnlinePanel] 로드 실패:', err);
+    list.innerHTML = '<p class="online-panel-placeholder" style="color:#ef4444;">불러오기 실패</p>';
+  }
+};
+
+window.toggleDriverOnline = async function (encodedId) {
+  const token = window.getAdminToken?.() || '';
+  if (!token) return;
+  try {
+    const res = await fetch(`/api/admin/drivers-pool/${encodedId}/online`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await window.refreshOnlinePanel();
+  } catch (err) {
+    console.error('[OnlinePanel] 상태 변경 실패:', err);
+    window.safeToast?.('온라인 상태 변경에 실패했습니다.', 'error');
+  }
+};
+
+// 관리자 로그인 성공 후 패널 버튼 표시 + 30초 자동 갱신
+window.startOnlinePanelPolling = function () {
+  const toggle = document.getElementById('online-panel-toggle');
+  if (toggle) toggle.style.display = 'flex';
+  window.refreshOnlinePanel();
+  if (_onlinePanelRefreshTimer) clearInterval(_onlinePanelRefreshTimer);
+  _onlinePanelRefreshTimer = setInterval(window.refreshOnlinePanel, 30000);
+};
+
+window.stopOnlinePanelPolling = function () {
+  if (_onlinePanelRefreshTimer) {
+    clearInterval(_onlinePanelRefreshTimer);
+    _onlinePanelRefreshTimer = null;
+  }
+  const toggle = document.getElementById('online-panel-toggle');
+  if (toggle) toggle.style.display = 'none';
+  const panel = document.getElementById('online-member-panel');
+  if (panel) panel.classList.remove('is-open');
+};

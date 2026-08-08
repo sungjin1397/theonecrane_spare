@@ -92,7 +92,7 @@ window.addOrderData = async function (e) {
     date, craneType, company, clientTel, locationName, driverName,
     workTime, nightWork, extraExpenses, totalAmount, feeRate,
     invoice: taxInvoice, dueDate,
-    dispatchStatus: '배차대기',
+    dispatchStatus: '대기 중',
     payStatus: '미수',
     createdAt: new Date().toISOString()
   };
@@ -185,7 +185,7 @@ window.renderERPGrid = async function () {
           <td style="text-align:right;"><b>${m.driverPay.toLocaleString()}원</b></td>
           <td><button type="button" data-order-action="toggle" data-order-id="${id}" data-order-field="invoice" style="border:none; border-radius:4px; padding:4px 6px; cursor:pointer; background:${invoice === '발행완료' ? '#dcfce7' : '#f1f5f9'};">${esc(invoice)}</button></td>
           <td style="white-space:nowrap;">${esc(o.dueDate || '-')}</td>
-          <td><button type="button" data-order-action="toggle" data-order-id="${id}" data-order-field="dispatchStatus" style="border:none; border-radius:4px; padding:4px 6px; cursor:pointer; background:${dispatch === '배차완료' ? '#dcfce7' : '#fef3c7'};">${esc(dispatch)}</button></td>
+          <td>${dispatchBadgeHtml(id, dispatch)}</td>
           <td><button type="button" data-order-action="toggle" data-order-id="${id}" data-order-field="payStatus" style="border:none; border-radius:4px; padding:4px 6px; cursor:pointer; background:${pay === '입금완료' ? '#dcfce7' : '#fee2e2'};">${esc(pay)}</button></td>
           <td><button type="button" data-order-action="delete" data-order-id="${id}" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">삭제</button></td>
         </tr>
@@ -206,10 +206,26 @@ window.renderERPGrid = async function () {
 
 // 🔁 5. 상태 토글 (배차상태 / 입금여부 / 계산서) — 서버 허용 필드만 사용
 const ORDER_FIELD_CYCLES = {
-  dispatchStatus: ['배차대기', '배차완료'],
+  dispatchStatus: ['대기 중', '배차 완료', '운행 중', '완료'],
   payStatus: ['미수', '입금완료'],
   invoice: ['발행전', '발행완료', '미발행']
 };
+
+// 배차 상태별 뱃지 HTML 반환
+function dispatchBadgeHtml(id, status) {
+  const map = {
+    '대기 중':  { cls: 'dispatch-badge--waiting',  icon: '⏳' },
+    '배차 완료': { cls: 'dispatch-badge--assigned', icon: '✅' },
+    '운행 중':  { cls: 'dispatch-badge--driving',  icon: '🚚' },
+    '완료':     { cls: 'dispatch-badge--done',      icon: '🏁' },
+    // 구형 값 호환
+    '배차대기':  { cls: 'dispatch-badge--waiting',  icon: '⏳' },
+    '배차완료':  { cls: 'dispatch-badge--assigned', icon: '✅' },
+  };
+  const { cls, icon } = map[status] || { cls: 'dispatch-badge--waiting', icon: '⏳' };
+  const safeStatus = window.escapeHtml(status);
+  return `<button type="button" class="dispatch-badge ${cls}" data-order-action="toggle" data-order-id="${id}" data-order-field="dispatchStatus">${icon} ${safeStatus}</button>`;
+}
 
 window.toggleOrderField = async function (encodedId, field) {
   const cycle = ORDER_FIELD_CYCLES[field];
