@@ -555,6 +555,22 @@ app.get('/api/admin/visitors', authenticateAdmin, (req, res) => {
     res.json(listVisitorSessions());
 });
 
+// 로그인한 사용자가 브라우저에 머무는 동안 세션을 갱신하는 heartbeat
+app.post('/api/user/heartbeat', (req, res) => {
+    const authHeader = String(req.headers['authorization'] || '');
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return res.status(401).json({ success: false });
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'], issuer: 'theonecrane', audience: 'user' });
+        const users = readData('users');
+        const user = users.find(u => String(u.id) === String(decoded.sub) || String(u.phone) === String(decoded.phone));
+        if (user) touchVisitorSession(user, req, token);
+        return res.json({ success: true });
+    } catch {
+        return res.status(401).json({ success: false });
+    }
+});
+
 app.post('/api/user/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 30, key: (req) => `user-login:${req.ip}` }), (req, res) => {
     const rawPhone = cleanText(req.body?.phone, 30);
     const phone = rawPhone.replace(/[^0-9]/g, '');
@@ -584,8 +600,26 @@ app.get('/api/products', (req, res) => {
     res.json(readData('products'));
 });
 
-app.get('/api/drivers-pool', authenticateAdmin, (req,res)=>{
-    res.json(readData('drivers_pool'));
+app.get('/api/drivers-pool', authenticateAdmin, (req, res) => {
+    const pool = readData('drivers_pool');
+    const cutoff = Date.now() - 15 * 60 * 1000;
+
+    // 활성 세션의 전화번호 목록 (숫자만 추출해 정규화)
+    const onlinePhones = new Set();
+    for (const session of visitorSessions.values()) {
+        if (session.phone && new Date(session.lastSeenAt).getTime() >= cutoff) {
+            onlinePhones.add(String(session.phone).replace(/[^0-9]/g, ''));
+        }
+    }
+
+    const result = pool.map(d => {
+        const driverPhone = String(d.tel || '').replace(/[^0-9]/g, '');
+        // 실제 접속 세션이 있으면 자동 ON, 없으면 수동 저장값 사용
+        const isOnline = (driverPhone && onlinePhones.has(driverPhone)) || !!d.isOnline;
+        return { ...d, isOnline };
+    });
+
+    res.json(result);
 });
 
 app.post('/api/admin/orders', authenticateAdmin, (req, res) => {

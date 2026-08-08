@@ -303,3 +303,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMainNoticeList();
   }
 });
+
+// 로그인한 사용자의 세션을 서버에 1분마다 갱신 (온라인 상태 자동 유지)
+(function startUserHeartbeat() {
+  function ping() {
+    const token = sessionStorage.getItem('userToken') || '';
+    if (!token) return;
+    fetch('/api/user/heartbeat', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    }).catch(() => {});
+  }
+  // 페이지 로드 즉시 1회, 이후 60초 간격
+  ping();
+  setInterval(ping, 60000);
+})();
