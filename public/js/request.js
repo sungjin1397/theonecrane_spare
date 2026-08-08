@@ -477,17 +477,8 @@ window.completeRequest = window.deleteRequest;
 window.approveDriver = window.registerDriver;
 window.removeDriver = window.deleteDriver;
 
-// 🎧 15. DOM 준비 및 로드 즉시 초기화
-function initRequestModule() {
-  window.renderInboxRequests();
-  window.renderInboxDrivers();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initRequestModule);
-} else {
-  initRequestModule();
-}
+// 🎧 15. 구형 localStorage 초기화 비활성화
+// 아래에서 서버 연동 최종 함수로 재초기화한다.
 
 /* Server-backed inbox overrides. Do not keep contact information in a visitor's local storage. */
 function adminToken() {
@@ -713,3 +704,15 @@ window.approveDriver = window.registerDriver;
 window.deleteReq = window.deleteRequest;
 window.completeRequest = window.deleteRequest;
 window.removeDriver = window.deleteDriver;
+
+function initServerBackedRequestModule() {
+  if (!window.isAdminSessionActive?.()) return;
+  window.renderInboxRequests?.();
+  window.renderInboxDrivers?.();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initServerBackedRequestModule);
+} else {
+  initServerBackedRequestModule();
+}
