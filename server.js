@@ -10,6 +10,24 @@ const { calcOrderMoney, createOrderFromInquiry, findMissingOrderFields } = requi
 const { listVisitorSessions: listVisitorSessionsFromStore } = require('./shared/visitorSessions');
 const { getAdminTokenTtl } = require('./shared/authConfig');
 
+const dotenvCandidates = [
+    path.join(__dirname, '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '..', '.env')
+];
+let loadedDotenvPath = '';
+for (const candidate of dotenvCandidates) {
+    if (!candidate || !fs.existsSync(candidate)) continue;
+    dotenv.config({ path: candidate, override: false });
+    loadedDotenvPath = candidate;
+    break;
+}
+if (loadedDotenvPath) {
+    console.log(`[Config] .env loaded from: ${loadedDotenvPath}`);
+} else {
+    console.warn('[Config] .env file not found. Using process environment variables only.');
+}
+
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
 const JWT_SECRET = process.env.JWT_SECRET || 'theonecrane-local-jwt-secret-20260801-please-change';
@@ -25,17 +43,6 @@ const BOARD_MAX_IMAGES = 3;
 const BOARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const BOARD_ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const TELEGRAM_CONFIG_PATH = path.join(DATA_DIR, 'telegram.config.json');
-
-const dotenvCandidates = [
-    path.join(__dirname, '.env'),
-    path.join(process.cwd(), '.env'),
-    path.join(__dirname, '..', '.env')
-];
-for (const candidate of dotenvCandidates) {
-    if (!candidate || !fs.existsSync(candidate)) continue;
-    dotenv.config({ path: candidate, override: false });
-    break;
-}
 
 function getAllowedOrigins() {
     return (CORS_ORIGIN || '')
@@ -202,6 +209,20 @@ function getTelegramCredentials() {
     ).trim();
 
     return { token, chatId };
+}
+
+function getTelegramCredentialSource() {
+    if (process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN || process.env.TG_BOT_TOKEN) {
+        return 'ENV';
+    }
+    if (process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TARGET_CHAT_ID || process.env.TG_CHAT_ID || process.env.TELEGRAM_CHATID) {
+        return 'ENV';
+    }
+    const fileConfig = readTelegramConfig() || {};
+    if ((fileConfig.botToken || fileConfig.token) && (fileConfig.chatId || fileConfig.targetChatId)) {
+        return 'DATA_FILE';
+    }
+    return 'MISSING';
 }
 
 function sanitizeBoardImages(images) {
@@ -386,9 +407,14 @@ app.post('/api/inbox/driver', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }), 
 });
 
 let telegramMissingConfigLogged = false;
+let telegramSourceLogged = false;
 const sendTelegram = async (msg, context = 'GENERAL') => {
 
     const { token, chatId } = getTelegramCredentials();
+    if (!telegramSourceLogged) {
+        telegramSourceLogged = true;
+        console.log(`[Telegram] credential source: ${getTelegramCredentialSource()}`);
+    }
 
     try {
 
