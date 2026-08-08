@@ -94,9 +94,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false
 }));
-app.use(express.json({ limit: '8mb', strict: true }));
-app.use(express.text({ type: ['text/plain'], limit: '128kb' }));
-app.use(express.urlencoded({ extended: false, limit: '8mb' }));
+app.use(express.json({ limit: '25mb', strict: true }));
+app.use(express.text({ type: ['text/plain'], limit: '256kb' }));
+app.use(express.urlencoded({ extended: false, limit: '25mb' }));
 // Always revalidate static assets so urgent customer-facing fixes are not hidden by a stale browser cache.
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html', maxAge: 0, etag: true }));
 app.get('/favicon.ico', (req, res) => res.status(204).end());

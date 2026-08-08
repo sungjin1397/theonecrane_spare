@@ -449,6 +449,9 @@ window.handleBoardSubmit = async function (e) {
       });
 
       const result = await response.json().catch(() => ({}));
+      if (response.status === 413) {
+        throw new Error('사진 용량이 너무 큽니다. 사진 크기(해상도/품질)를 줄여 다시 시도해 주세요.');
+      }
       if (!response.ok || !result?.success || !result?.data) {
         throw new Error(result?.error || '게시글 서버 저장에 실패했습니다.');
       }
