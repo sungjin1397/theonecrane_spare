@@ -6,6 +6,8 @@ let currentViewingPostId = null;
 const BOARD_MAX_IMAGES = 3;
 const BOARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const BOARD_ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const BOARD_TARGET_IMAGE_BYTES = 350 * 1024;
+const BOARD_MAX_IMAGE_DIMENSION = 1600;
 
 function normalizePostImages(images) {
   if (!Array.isArray(images)) return [];
@@ -25,6 +27,91 @@ function normalizePostImages(images) {
       return { name, type, data };
     })
     .filter(Boolean);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(String(e?.target?.result || ''));
+    reader.onerror = () => reject(new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('이미지 해석에 실패했습니다.'));
+    image.src = dataUrl;
+  });
+}
+
+function estimateDataUrlBytes(dataUrl) {
+  const payload = String(dataUrl || '').split(',')[1] || '';
+  return Math.floor((payload.length * 3) / 4);
+}
+
+async function optimizeImageForBoard(file) {
+  const normalizedType = String(file?.type || '').toLowerCase();
+  const outputType = normalizedType === 'image/png' ? 'image/png' : 'image/jpeg';
+  const srcDataUrl = await fileToDataUrl(file);
+  const image = await loadImageFromDataUrl(srcDataUrl);
+
+  const originalWidth = Number(image.naturalWidth || image.width || 0);
+  const originalHeight = Number(image.naturalHeight || image.height || 0);
+  if (!originalWidth || !originalHeight) {
+    return {
+      name: file.name,
+      type: normalizedType || outputType,
+      data: srcDataUrl
+    };
+  }
+
+  let scale = Math.min(1, BOARD_MAX_IMAGE_DIMENSION / Math.max(originalWidth, originalHeight));
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return {
+      name: file.name,
+      type: normalizedType || outputType,
+      data: srcDataUrl
+    };
+  }
+
+  let bestDataUrl = srcDataUrl;
+  let quality = outputType === 'image/png' ? undefined : 0.9;
+
+  for (let resizeStep = 0; resizeStep < 5; resizeStep += 1) {
+    const width = Math.max(1, Math.floor(originalWidth * scale));
+    const height = Math.max(1, Math.floor(originalHeight * scale));
+    canvas.width = width;
+    canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+
+    if (outputType === 'image/png') {
+      bestDataUrl = canvas.toDataURL(outputType);
+      if (estimateDataUrlBytes(bestDataUrl) <= BOARD_TARGET_IMAGE_BYTES) break;
+    } else {
+      for (quality = 0.9; quality >= 0.45; quality -= 0.1) {
+        const candidate = canvas.toDataURL(outputType, Number(quality.toFixed(2)));
+        bestDataUrl = candidate;
+        if (estimateDataUrlBytes(candidate) <= BOARD_TARGET_IMAGE_BYTES) {
+          break;
+        }
+      }
+      if (estimateDataUrlBytes(bestDataUrl) <= BOARD_TARGET_IMAGE_BYTES) break;
+    }
+
+    scale *= 0.82;
+  }
+
+  return {
+    name: file.name,
+    type: outputType,
+    data: bestDataUrl
+  };
 }
 
 // 🔒 1. XSS 방지 HTML 소독 함수
@@ -679,7 +766,7 @@ const imageUpload = document.getElementById("imageUpload");
 const imagePreview = document.getElementById("imagePreview");
 
 if (imageUpload) {
-    imageUpload.addEventListener("change", function (event) {
+  imageUpload.addEventListener("change", async function (event) {
 
         const files = Array.from(event.target.files || []);
         const remainingSlots = BOARD_MAX_IMAGES - selectedImages.length;
@@ -696,36 +783,26 @@ if (imageUpload) {
 
         const targetFiles = files.slice(0, remainingSlots);
 
-        targetFiles.forEach(file => {
-
+        for (const file of targetFiles) {
           const normalizedType = String(file.type || '').toLowerCase();
           if (!BOARD_ALLOWED_IMAGE_TYPES.has(normalizedType)) {
             safeToast('JPG, PNG, WEBP, GIF 파일만 업로드할 수 있습니다.', 'warning');
-            return;
+            continue;
           }
 
           if (Number(file.size || 0) > BOARD_MAX_IMAGE_BYTES) {
-            safeToast('사진 1장당 최대 2MB까지 업로드할 수 있습니다.', 'warning');
-                return;
-            }
+            safeToast('원본이 커서 자동으로 용량을 줄입니다. 잠시만 기다려 주세요.', 'info');
+          }
 
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-
-                const imageData = {
-                    name: file.name,
-                    type: file.type,
-                    data: e.target.result
-                };
-
-                selectedImages.push(imageData);
-
-                renderImagePreview();
-            };
-
-            reader.readAsDataURL(file);
-        });
+          try {
+            const imageData = await optimizeImageForBoard(file);
+            selectedImages.push(imageData);
+            renderImagePreview();
+          } catch (err) {
+            console.warn('이미지 최적화 실패:', err);
+            safeToast('이미지 처리에 실패해 해당 파일은 제외되었습니다.', 'warning');
+          }
+        }
 
         // 같은 파일 다시 선택 가능하도록 초기화
         imageUpload.value = "";
