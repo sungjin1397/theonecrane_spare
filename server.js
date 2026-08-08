@@ -43,6 +43,13 @@ const BOARD_MAX_IMAGES = 3;
 const BOARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const BOARD_ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const TELEGRAM_CONFIG_PATH = path.join(DATA_DIR, 'telegram.config.json');
+let telegramLastStatus = {
+    ok: null,
+    error: '',
+    context: '',
+    sentAt: '',
+    source: 'MISSING'
+};
 
 function getAllowedOrigins() {
     return (CORS_ORIGIN || '')
@@ -187,28 +194,64 @@ function readTelegramConfig() {
     }
 }
 
+function parseTelegramToken(rawToken) {
+    const value = String(rawToken || '').trim();
+    if (!value) return '';
+
+    // 운영 환경에서 전체 URL이나 bot prefix가 같이 들어오더라도 토큰 본문만 추출한다.
+    const urlMatch = value.match(/\/bot([^/]+)\/(sendMessage|sendPhoto|sendDocument)/i);
+    if (urlMatch && urlMatch[1]) return String(urlMatch[1]).trim();
+
+    return value.replace(/^bot/i, '').trim();
+}
+
+function parseTelegramChatIds(rawChatId) {
+    if (Array.isArray(rawChatId)) {
+        return rawChatId
+            .map(item => String(item || '').trim())
+            .filter(Boolean);
+    }
+
+    return String(rawChatId || '')
+        .split(/[\n,;\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+}
+
 function getTelegramCredentials() {
     const fileConfig = readTelegramConfig() || {};
-    const token = String(
+    const token = parseTelegramToken(
         process.env.TELEGRAM_BOT_TOKEN
         || process.env.TELEGRAM_TOKEN
         || process.env.TG_BOT_TOKEN
+        || process.env.TELEGRAM_TOKEN_VALUE
         || fileConfig.botToken
         || fileConfig.token
+        || fileConfig.telegramBotToken
+        || fileConfig.telegram_token
         || ''
-    ).trim();
+    );
 
-    const chatId = String(
+    const chatIds = parseTelegramChatIds(
         process.env.TELEGRAM_CHAT_ID
+        || process.env.TELEGRAM_CHAT_IDS
         || process.env.TELEGRAM_TARGET_CHAT_ID
         || process.env.TG_CHAT_ID
         || process.env.TELEGRAM_CHATID
+        || process.env.TELEGRAM_TARGET_CHAT
         || fileConfig.chatId
+        || fileConfig.chatID
+        || fileConfig.chat_id
+        || fileConfig.telegramChatId
+        || fileConfig.telegram_chat_id
         || fileConfig.targetChatId
+        || fileConfig.chatIds
+        || fileConfig.telegramChatIds
         || ''
-    ).trim();
+    );
 
-    return { token, chatId };
+    const chatId = chatIds[0] || '';
+    return { token, chatId, chatIds };
 }
 
 function getTelegramCredentialSource() {
@@ -410,55 +453,75 @@ let telegramMissingConfigLogged = false;
 let telegramSourceLogged = false;
 const sendTelegram = async (msg, context = 'GENERAL') => {
 
-    const { token, chatId } = getTelegramCredentials();
+    const { token, chatId, chatIds } = getTelegramCredentials();
     if (!telegramSourceLogged) {
         telegramSourceLogged = true;
         console.log(`[Telegram] credential source: ${getTelegramCredentialSource()}`);
     }
 
+    telegramLastStatus.source = getTelegramCredentialSource();
+    telegramLastStatus.context = context;
+    telegramLastStatus.sentAt = new Date().toISOString();
+
     try {
 
-        if (!token || !chatId) {
+        if (!token || (!chatId && !chatIds.length)) {
             if (!telegramMissingConfigLogged) {
                 telegramMissingConfigLogged = true;
                 console.error('[Telegram] 설정값이 없어 전송을 건너뜁니다. TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 또는 data/telegram.config.json을 확인하세요.');
             }
+            telegramLastStatus.ok = false;
+            telegramLastStatus.error = 'TELEGRAM_ENV_MISSING';
             return { ok: false, error: 'TELEGRAM_ENV_MISSING' };
         }
 
-        for (let attempt = 1; attempt <= 2; attempt += 1) {
-            try {
-                const response = await axios.post(
-                    `https://api.telegram.org/bot${token}/sendMessage`,
-                    {
-                        chat_id: chatId,
-                        text: String(msg || '').slice(0, 4000)
-                    },
-                    {
-                        timeout: 10000
+        const targets = chatIds.length ? chatIds : [chatId];
+
+        for (const targetChatId of targets) {
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+                try {
+                    const response = await axios.post(
+                        `https://api.telegram.org/bot${token}/sendMessage`,
+                        {
+                            chat_id: targetChatId,
+                            text: String(msg || '').slice(0, 4000)
+                        },
+                        {
+                            timeout: 10000
+                        }
+                    );
+
+                    if (response?.data?.ok !== true) {
+                        const apiError = response?.data?.description || 'TELEGRAM_API_NOT_OK';
+                        console.error(`[Telegram] 실패 (${context})`, response?.data || 'Unknown API response');
+                        telegramLastStatus.ok = false;
+                        telegramLastStatus.error = String(apiError);
+                        return { ok: false, error: apiError };
                     }
-                );
 
-                if (response?.data?.ok !== true) {
-                    console.error(`[Telegram] 실패 (${context})`, response?.data || 'Unknown API response');
-                    return { ok: false, error: response?.data?.description || 'TELEGRAM_API_NOT_OK' };
-                }
-
-                return { ok: true };
-            } catch (err) {
-                const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
-                if (attempt >= 2) {
-                    console.error(`[Telegram] 실패 (${context})`, detail);
-                    return { ok: false, error: String(detail) };
+                    telegramLastStatus.ok = true;
+                    telegramLastStatus.error = '';
+                    break;
+                } catch (err) {
+                    const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
+                    if (attempt >= 2) {
+                        console.error(`[Telegram] 실패 (${context})`, detail);
+                        telegramLastStatus.ok = false;
+                        telegramLastStatus.error = String(detail);
+                        return { ok: false, error: String(detail) };
+                    }
                 }
             }
         }
-        return { ok: false, error: 'TELEGRAM_UNKNOWN_ERROR' };
+
+        return { ok: true };
 
     } catch (err) {
 
         const detail = err.response?.data?.description || err.response?.data || err.message || 'Unknown error';
         console.error(`[Telegram] 실패 (${context})`, detail);
+        telegramLastStatus.ok = false;
+        telegramLastStatus.error = String(detail);
         return { ok: false, error: String(detail) };
 
     }
@@ -546,6 +609,21 @@ app.post('/api/admin/telegram/test', authenticateAdmin, async (req, res) => {
     }
 
     return res.json({ success: true, message: '텔레그램 전송 성공' });
+});
+
+app.get('/api/admin/telegram/status', authenticateAdmin, (req, res) => {
+    const { token, chatIds } = getTelegramCredentials();
+    const source = getTelegramCredentialSource();
+
+    return res.json({
+        success: true,
+        configured: Boolean(token && Array.isArray(chatIds) && chatIds.length > 0),
+        tokenConfigured: Boolean(token),
+        chatIdsConfigured: Array.isArray(chatIds) && chatIds.length > 0,
+        chatIdCount: Array.isArray(chatIds) ? chatIds.length : 0,
+        source,
+        last: telegramLastStatus
+    });
 });
 
 app.post('/api/user/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, key: (req) => `user-register:${req.ip}` }), (req, res) => {
@@ -778,11 +856,18 @@ app.get('/api/drivers-pool', authenticateAdmin, (req, res) => {
 
     const result = pool.map(d => {
         const driverPhones = extractDriverPhones(d);
-        const hasActiveSession = driverPhones.some(phone => onlinePhones.has(phone));
-        const manualOnline = Boolean(d.manualOnline ?? d.isOnline ?? false);
+        const isApproved = d.approved !== false;
+        const hasActiveSession = isApproved && driverPhones.some(phone => onlinePhones.has(phone));
+        const manualOnline = isApproved ? Boolean(d.manualOnline ?? d.isOnline ?? false) : false;
         const isOnline = hasActiveSession || manualOnline;
         const onlineSource = hasActiveSession ? 'AUTO' : (manualOnline ? 'MANUAL' : 'OFF');
-        return { ...d, manualOnline, isOnline, onlineSource };
+        return {
+            ...d,
+            approved: isApproved,
+            manualOnline,
+            isOnline,
+            onlineSource
+        };
     });
 
     res.json(result);
@@ -938,20 +1023,36 @@ app.post('/api/admin/approve-driver', authenticateAdmin, (req, res) => {
     const { id } = req.body;
     let inbox = readData('inbox_drv');
     let pool = readData('drivers_pool');
-    const driver = inbox.find(d => String(d.id) === String(id));
+    const driver = inbox.find(d => String(d.id) === String(id) || String(d._id) === String(id));
 
     if(!driver){
         return res.status(404).json({ success:false });
     }
 
     const resolvedType = driver.type || driver.craneType || driver.possibleType || driver.equipment || driver.driverType || driver.spec || '';
+    const normalizedTel = normalizePhone(driver.tel || driver.phone || driver.mobile || '');
     driver.approved = true;
     driver.approvedAt = new Date().toLocaleString('ko-KR', {timeZone:'Asia/Seoul'});
     driver.type = resolvedType;
     driver.craneType = resolvedType;
     driver.possibleType = resolvedType;
-    pool.push(driver);
-    inbox = inbox.filter(d => String(d.id) !== String(id));
+    if (normalizedTel) {
+        driver.phone = normalizedTel;
+        driver.tel = normalizedTel;
+    }
+
+    const existingIndex = pool.findIndex((item) => {
+        if (String(item.id) === String(driver.id) || String(item._id) === String(driver._id)) return true;
+        if (!normalizedTel) return false;
+        return extractDriverPhones(item).includes(normalizedTel);
+    });
+
+    if (existingIndex >= 0) {
+        pool[existingIndex] = { ...pool[existingIndex], ...driver, approved: true };
+    } else {
+        pool.push(driver);
+    }
+    inbox = inbox.filter(d => String(d.id) !== String(id) && String(d._id) !== String(id));
     
     saveData('inbox_drv', inbox);
     saveData('drivers_pool', pool);

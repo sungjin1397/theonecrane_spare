@@ -4,6 +4,8 @@
 
 let currentViewingPostId = null;
 const BOARD_MAX_IMAGES = 3;
+const BOARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const BOARD_ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 function normalizePostImages(images) {
   if (!Array.isArray(images)) return [];
@@ -423,57 +425,48 @@ window.handleBoardSubmit = async function (e) {
       images: attachedImages
     };
 
-    let currentPosts = getBoardPosts();
-    if (!Array.isArray(currentPosts)) {
-      currentPosts = getDefaultPosts();
-    }
-
-    currentPosts.unshift(newPost);
-    localStorage.setItem('crane_board_posts', JSON.stringify(currentPosts));
-    window.__boardPostsCache = currentPosts;
-
     if (isAdmin) {
-      const token = sessionStorage.getItem('theone_secure_token');
-      if (token) {
-        try {
-          const response = await fetch('/api/board', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              title,
-              content,
-              writer: author,
-              category,
-              isPinned: newPost.isPinned,
-              images: attachedImages
-            })
-          });
-          if (response.ok) {
-            const result = await response.json();
-            if (result?.success && result.data) {
-              const savedPost = {
-                id: result.data.id,
-                category: result.data.category || category,
-                title: result.data.title,
-                author: result.data.writer,
-                date: formatBoardDate(result.data.createdAt || dateString),
-                views: 0,
-                content: result.data.content,
-                isPinned: Boolean(result.data.isPinned || newPost.isPinned),
-                images: normalizePostImages(result.data.images || attachedImages)
-              };
-              currentPosts[0] = savedPost;
-              localStorage.setItem('crane_board_posts', JSON.stringify(currentPosts));
-              window.__boardPostsCache = currentPosts;
-            }
-          }
-        } catch (apiErr) {
-          console.warn('게시판 서버 저장 실패:', apiErr);
-        }
+      const token = sessionStorage.getItem('theone_secure_token') || '';
+      if (!token) {
+        safeToast('관리자 인증이 만료되었습니다. 다시 로그인해 주세요.', 'warning');
+        return;
       }
+
+      const response = await fetch('/api/board', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          writer: author,
+          category,
+          isPinned: newPost.isPinned,
+          images: attachedImages
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success || !result?.data) {
+        throw new Error(result?.error || '게시글 서버 저장에 실패했습니다.');
+      }
+
+      const refreshed = await window.fetchBoardPostsFromApi();
+      if (Array.isArray(refreshed)) {
+        window.__boardPostsCache = refreshed;
+        localStorage.setItem('crane_board_posts', JSON.stringify(refreshed));
+      }
+    } else {
+      let currentPosts = getBoardPosts();
+      if (!Array.isArray(currentPosts)) {
+        currentPosts = getDefaultPosts();
+      }
+
+      currentPosts.unshift(newPost);
+      localStorage.setItem('crane_board_posts', JSON.stringify(currentPosts));
+      window.__boardPostsCache = currentPosts;
     }
 
     safeToast("게시글이 성공적으로 등록되었습니다.", "success");
@@ -702,7 +695,14 @@ if (imageUpload) {
 
         targetFiles.forEach(file => {
 
-            if (!file.type.startsWith("image/")) {
+          const normalizedType = String(file.type || '').toLowerCase();
+          if (!BOARD_ALLOWED_IMAGE_TYPES.has(normalizedType)) {
+            safeToast('JPG, PNG, WEBP, GIF 파일만 업로드할 수 있습니다.', 'warning');
+            return;
+          }
+
+          if (Number(file.size || 0) > BOARD_MAX_IMAGE_BYTES) {
+            safeToast('사진 1장당 최대 2MB까지 업로드할 수 있습니다.', 'warning');
                 return;
             }
 
