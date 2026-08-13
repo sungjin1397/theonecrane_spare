@@ -851,9 +851,33 @@ app.get('/api/products', (req, res) => {
 });
 
 app.get('/api/public/drivers-count', (req, res) => {
-    const pool = readData('drivers_pool');
-    const list = Array.isArray(pool) ? pool : [];
-    const count = list.filter((driver) => driver && driver.approved !== false).length;
+    const pool = Array.isArray(readData('drivers_pool')) ? readData('drivers_pool') : [];
+    const inbox = Array.isArray(readData('inbox_drv')) ? readData('inbox_drv') : [];
+
+    const normalized = [];
+    const appendList = (items) => {
+        items.forEach((driver) => {
+            if (!driver || typeof driver !== 'object') return;
+            normalized.push(driver);
+        });
+    };
+
+    appendList(pool);
+    appendList(inbox);
+
+    const dedupe = new Set();
+    normalized.forEach((driver) => {
+        const idKey = String(driver.id || driver._id || '').trim();
+        const phoneKey = normalizePhone(driver.tel || driver.phone || driver.mobile || '');
+        const key = idKey || phoneKey || JSON.stringify({
+            name: String(driver.name || '').trim(),
+            type: String(driver.type || driver.craneType || driver.possibleType || '').trim()
+        });
+        if (!key) return;
+        dedupe.add(key);
+    });
+
+    const count = dedupe.size;
     res.json({ count });
 });
 
