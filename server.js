@@ -850,6 +850,13 @@ app.get('/api/products', (req, res) => {
     res.json(readData('products'));
 });
 
+app.get('/api/public/drivers-count', (req, res) => {
+    const pool = readData('drivers_pool');
+    const list = Array.isArray(pool) ? pool : [];
+    const count = list.filter((driver) => driver && driver.approved !== false).length;
+    res.json({ count });
+});
+
 app.get('/api/drivers-pool', authenticateAdmin, (req, res) => {
     const pool = readData('drivers_pool');
     const onlinePhones = getRecentOnlinePhones();

@@ -302,7 +302,33 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof renderMainNoticeList === 'function') {
     renderMainNoticeList();
   }
+  if (typeof window.loadRegisteredDriverCount === 'function') {
+    window.loadRegisteredDriverCount();
+    if (!window.__registeredDriverCountTimer) {
+      window.__registeredDriverCountTimer = setInterval(window.loadRegisteredDriverCount, 60000);
+    }
+  }
 });
+
+window.loadRegisteredDriverCount = async function () {
+  const countEl = document.getElementById('registeredDriverCount');
+  if (!countEl) return;
+
+  try {
+    const response = await fetch('/api/public/drivers-count', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+    const count = Number(result?.count);
+    const safeCount = Number.isFinite(count) && count >= 0 ? count : 0;
+    countEl.innerText = `${safeCount}명`;
+  } catch (err) {
+    console.error('[Common] 등록 기사 수 조회 실패:', err);
+    countEl.innerText = '확인중';
+  }
+};
 
 // 로그인한 사용자의 세션을 서버에 1분마다 갱신 (온라인 상태 자동 유지)
 (function startUserHeartbeat() {
