@@ -9,6 +9,12 @@
 !.env.example
 data/
 _gabia_upload/
+_gabia_upload.zip
+.vscode/
+board_base64.txt
+d
+tools/
+scripts/_tmp_gabia_cleanup.ps1
 
 # User-specific files
 *.rsuser
