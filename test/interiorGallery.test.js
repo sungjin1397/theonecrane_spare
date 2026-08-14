@@ -1,6 +1,24 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeInteriorGalleryItems } = require('../shared/interiorGallery');
+const { normalizeInteriorGalleryItems, resolveInteriorGalleryItems } = require('../shared/interiorGallery');
+
+test('resolveInteriorGalleryItems prefers server data over local fallback and caps the final list', () => {
+  const serverItems = [
+    { id: 'srv-1', image: 'data:image/jpeg;base64,aaa', title: 'Server A', description: 'Server detail' },
+    { id: 'srv-2', image: 'data:image/jpeg;base64,bbb', title: 'Server B', description: 'Server detail 2' },
+    { id: 'srv-3', image: 'data:image/jpeg;base64,ccc', title: 'Server C', description: 'Server detail 3' }
+  ];
+  const localItems = [
+    { id: 'local-1', image: 'data:image/jpeg;base64,zzz', title: 'Local Z', description: 'Local detail' },
+    { id: 'local-2', image: 'data:image/jpeg;base64,yyy', title: 'Local Y', description: 'Local detail 2' }
+  ];
+
+  const resolved = resolveInteriorGalleryItems(serverItems, localItems);
+
+  assert.equal(resolved.length, 3);
+  assert.equal(resolved[0].title, 'Server A');
+  assert.ok(!resolved.some(item => item.title.startsWith('Local')));
+});
 
 test('normalizeInteriorGalleryItems keeps only valid images and caps at five items', () => {
   const items = [

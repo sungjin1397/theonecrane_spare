@@ -14,6 +14,14 @@ function normalizeInteriorGalleryItems(items) {
   return valid;
 }
 
+function resolveInteriorGalleryItems(serverItems, localItems) {
+  const source = normalizeInteriorGalleryItems(Array.isArray(serverItems) ? serverItems : []);
+  if (source.length > 0) return source;
+
+  return normalizeInteriorGalleryItems(Array.isArray(localItems) ? localItems : []);
+}
+
 module.exports = {
-  normalizeInteriorGalleryItems
+  normalizeInteriorGalleryItems,
+  resolveInteriorGalleryItems
 };

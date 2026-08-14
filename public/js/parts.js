@@ -298,20 +298,27 @@ window.loadInteriorGallery = async function() {
             const result = await response.json();
             const items = Array.isArray(result?.items) ? result.items : [];
             window.interiorGalleryPhotos = items;
-            localStorage.setItem(INTERIOR_GALLERY_STORAGE_KEY, JSON.stringify(items));
+            if (typeof window.renderInteriorGallery === 'function') {
+                window.renderInteriorGallery();
+            }
             return;
         }
     } catch (error) {
-        console.warn('[InteriorGallery] 서버 로드 실패, 로컬 저장소를 사용합니다.', error);
+        console.warn('[InteriorGallery] 서버 로드 실패. 마지막 안전장치로 로컬 저장소를 확인합니다.', error);
     }
 
     try {
         const raw = localStorage.getItem(INTERIOR_GALLERY_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
-        window.interiorGalleryPhotos = Array.isArray(parsed) ? parsed : [];
+        const localItems = Array.isArray(parsed) ? parsed : [];
+        window.interiorGalleryPhotos = localItems.slice(0, 5);
     } catch (error) {
         console.error('[InteriorGallery] 저장된 데이터 읽기 실패:', error);
         window.interiorGalleryPhotos = [];
+    }
+
+    if (typeof window.renderInteriorGallery === 'function') {
+        window.renderInteriorGallery();
     }
 };
 
@@ -679,6 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
-    loadInteriorGallery();
-    renderInteriorGallery();
+    loadInteriorGallery().finally(() => {
+        renderInteriorGallery();
+    });
 });
