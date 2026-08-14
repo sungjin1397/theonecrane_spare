@@ -51,7 +51,7 @@
         <a href="#request" id="nav-request" onclick="showTab('request')">기사 요청</a>
         <a href="#driver" id="nav-driver-register" onclick="showTab('driver')">기사 등록</a>
         <a href="#rental" id="nav-rental" onclick="showTab('rental')">임대/렌탈</a>
-        <a href="#parts" id="nav-parts" onclick="showTab('parts')">부품 상담</a>
+        <a href="#parts" id="nav-parts" onclick="showTab('parts')">부품/인테리어 상담</a>
         <a href="#board" id="nav-board" onclick="showTab('board')">공지·소식</a>
     </div>
 
@@ -230,33 +230,120 @@
 </section>
 
 <section id="sec-parts" class="content-section">
-    <div class="form-container large" id="mall-container">
-        <h2 class="mall-heading">🛒 크레인 부품 구매 (새상품 / 중고[직거래])</h2>
-            <p class="mall-description">엄선된 정밀 부품을 도매가로 바로 구매하실 수 있습니다.</p>
-        <div id="step-privacy">
-            <div class="mall-privacy-block">
-                <div class="mall-privacy-title">안전한 거래를 위해 개인정보 수집 동의가 필요합니다.</div>
-                <div class="mall-privacy-box">
-                    1. 수집 항목: 접속 IP, 세션 정보<br>
-                    2. 수집 목적: 상품 판매 등록 된 부품 구매를 위한 외부 링크 연결 안전성 확보<br>
-                    3. 보유 기간: 브라우저 종료 시 즉시 파기<br>
-                    4. 본 서비스는 상품 정보 제공 및 외부 판매처 연결상품 서비스 입니다. 주문,결제,배송 및 환불은 해당 판매처의 정책을 따릅니다.<br>
-                    5. 중고상품은 판매자와 구매자 간 전화 상담 후 직거래로 진행합니다.<br>
-                </div>
-                <label class="mall-privacy-label">
-                    <input type="checkbox" id="salesPrivacyAgree" class="mall-privacy-checkbox">
-                    <b>[필수] 아웃바운드 링크 이동을 위한 약관에 동의합니다.</b>
-                </label>
-            </div>
-            <button onclick="showSalesStep2()" class="btn-submit">동의하고 부품 리스트 보기</button>
+    <div class="form-container large parts-consult-wrapper">
+        <div class="parts-top-tabs" aria-label="부품 및 시공 상담 메뉴">
+            <button type="button" class="parts-main-tab active" data-parts-tab="parts">부품상담</button>
+            <button type="button" class="parts-main-tab" data-parts-tab="interior">인테리어시공</button>
         </div>
-        <div id="step-mall">
-            <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filterProducts('ALL', this)">전체보기</button>
-                <button class="filter-btn" onclick="filterProducts('NEW', this)">새 상품</button>
-                <button class="filter-btn" onclick="filterProducts('USED', this)">중고(직거래) 상품</button>
+
+        <div id="parts-main-panel" class="parts-main-panel active">
+            <div id="mall-container">
+                <h2 class="mall-heading">🛒 크레인 부품 구매 (새상품 / 중고[직거래])</h2>
+                <p class="mall-description">엄선된 정밀 부품을 도매가로 바로 구매하실 수 있습니다.</p>
+                <div id="step-privacy">
+                    <div class="mall-privacy-block">
+                        <div class="mall-privacy-title">안전한 거래를 위해 개인정보 수집 동의가 필요합니다.</div>
+                        <div class="mall-privacy-box">
+                            1. 수집 항목: 접속 IP, 세션 정보<br>
+                            2. 수집 목적: 상품 판매 등록 된 부품 구매를 위한 외부 링크 연결 안전성 확보<br>
+                            3. 보유 기간: 브라우저 종료 시 즉시 파기<br>
+                            4. 본 서비스는 상품 정보 제공 및 외부 판매처 연결상품 서비스 입니다. 주문,결제,배송 및 환불은 해당 판매처의 정책을 따릅니다.<br>
+                            5. 중고상품은 판매자와 구매자 간 전화 상담 후 직거래로 진행합니다.<br>
+                        </div>
+                        <label class="mall-privacy-label">
+                            <input type="checkbox" id="salesPrivacyAgree" class="mall-privacy-checkbox">
+                            <b>[필수] 아웃바운드 링크 이동을 위한 약관에 동의합니다.</b>
+                        </label>
+                    </div>
+                    <button onclick="showSalesStep2()" class="btn-submit">동의하고 부품 리스트 보기</button>
+                </div>
+                <div id="step-mall">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterProducts('ALL', this)">전체보기</button>
+                        <button class="filter-btn" onclick="filterProducts('NEW', this)">새 상품</button>
+                        <button class="filter-btn" onclick="filterProducts('USED', this)">중고(직거래) 상품</button>
+                    </div>
+                    <div class="product-grid" id="productGridOutput"></div>
+                </div>
             </div>
-            <div class="product-grid" id="productGridOutput"></div>
+        </div>
+
+        <div id="interior-main-panel" class="parts-main-panel">
+            <div class="interior-subtabs" aria-label="인테리어 상담 메뉴">
+                <button type="button" class="interior-tab active" data-interior-tab="consult">인테리어 상담</button>
+                <button type="button" class="interior-tab" data-interior-tab="gallery">시공 사진</button>
+            </div>
+
+            <div id="interior-consult-panel" class="interior-panel active">
+                <div class="interior-intro">
+                    <h2 class="interior-heading">🏢 인테리어 시공 상담</h2>
+                    <p>건설업 인테리어 시공 사업자 등록과 시공팀 운영 기반으로, 현장 조건에 맞는 리모델링, 내부 마감, 공사 범위 상담을 진행합니다.</p>
+                </div>
+
+                <form onsubmit="handleInteriorConsultSubmit(event)" class="interior-form">
+                    <div class="interior-form-row">
+                        <label for="interiorCompany">상호</label>
+                        <input type="text" id="interiorCompany" placeholder="예: 더원건설" required>
+                    </div>
+                    <div class="interior-form-row">
+                        <label for="interiorManager">담당자명</label>
+                        <input type="text" id="interiorManager" placeholder="예: 홍길동" required>
+                    </div>
+                    <div class="interior-form-row">
+                        <label>연락처</label>
+                        <input type="tel" id="interiorTel" placeholder="010-0000-0000" required>
+                    </div>
+                    <div class="interior-form-row">
+                        <label for="interiorType">시공 종류</label>
+                        <select id="interiorType" aria-label="시공 종류">
+                            <option value="내부 인테리어">내부 인테리어</option>
+                            <option value="상업공간 리모델링">상업공간 리모델링</option>
+                            <option value="사무실 인테리어">사무실 인테리어</option>
+                            <option value="주택/빌라 리모델링">주택/빌라 리모델링</option>
+                            <option value="기타 시공 상담">기타 시공 상담</option>
+                        </select>
+                    </div>
+                    <div class="interior-form-row full">
+                        <label>시공 요구사항</label>
+                        <textarea id="interiorMemo" rows="5" placeholder="예: 1층 로비 리모델링, 벽체 마감, 조명, 바닥 공사, 예상 일정 등을 적어주세요."></textarea>
+                    </div>
+                    <div class="privacy-consent-box">
+                        <input type="checkbox" id="interiorPrivacyCheck" required>
+                        <label for="interiorPrivacyCheck">[필수] 인테리어 시공 상담을 위한 개인정보 수집·이용 동의</label>
+                    </div>
+                    <button type="submit" class="btn-submit">인테리어 시공 상담 신청</button>
+                </form>
+            </div>
+
+            <div id="interior-gallery-panel" class="interior-panel">
+                <div class="interior-gallery-header">
+                    <h2 class="interior-heading">📷 시공 사진 갤러리</h2>
+                    <div class="gallery-actions">
+                        <button type="button" onclick="clearInteriorGallery()" class="btn-secondary gallery-clear-btn">초기화</button>
+                    </div>
+                </div>
+
+                <div id="interiorGalleryUploader" class="interior-gallery-uploader">
+                    <div class="interior-form-row">
+                        <label for="interiorGalleryTitle">사진 제목</label>
+                        <input type="text" id="interiorGalleryTitle" placeholder="예: 로비 내장 마감 공사" maxlength="60">
+                    </div>
+                    <div class="interior-form-row full">
+                        <label for="interiorGalleryDesc">설명</label>
+                        <textarea id="interiorGalleryDesc" rows="3" placeholder="예: 1층 로비 인테리어 마감 및 조명 설치 후 모습"></textarea>
+                    </div>
+                    <div class="gallery-upload-form">
+                        <label class="gallery-upload-label" for="interiorPhotoUpload">
+                            <span>사진 선택</span>
+                            <input type="file" id="interiorPhotoUpload" accept="image/*" multiple>
+                        </label>
+                        <button type="button" onclick="submitInteriorGalleryPhoto()" class="btn-submit gallery-submit-btn">사진 올리기</button>
+                    </div>
+                    <div id="interiorGallerySelectedInfo" class="interior-gallery-selected-info">선택된 사진이 없습니다. (최대 5장)</div>
+                </div>
+
+                <div id="interiorGalleryGrid" class="interior-gallery-grid"></div>
+            </div>
         </div>
     </div>
 </section>
@@ -910,8 +997,8 @@
         </div>
     </div>
 </div>
-    <script src="./js/common.js?v=20260804a" defer></script>
-    <script src="./js/auth.js?v=20260803b" defer></script>
+    <script src="./js/common.js?v=20260814a" defer></script>
+    <script src="./js/auth.js?v=20260814b" defer></script>
     <script src="./js/board.js?v=20260809c" defer></script>
     <!-- driver.js 제거: 전 함수가 request.js/orders.js에 덮여 무인증 fetch만 남는 죽은 코드였음 -->
     <script src="./js/notice.js?v=20260801h" defer></script>

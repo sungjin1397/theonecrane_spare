@@ -9,6 +9,7 @@ const axios = require('axios'); // 알림용 추가
 const { calcOrderMoney, createOrderFromInquiry, findMissingOrderFields } = require('./shared/settlement');
 const { listVisitorSessions: listVisitorSessionsFromStore } = require('./shared/visitorSessions');
 const { getAdminTokenTtl } = require('./shared/authConfig');
+const { normalizeInteriorGalleryItems } = require('./shared/interiorGallery');
 
 const dotenvCandidates = [
     path.join(__dirname, '.env'),
@@ -536,6 +537,7 @@ const FILES = {
     board: path.join(DATA_DIR, 'board.json'),
     notice: path.join(DATA_DIR, 'notice.json'),
     users: path.join(DATA_DIR, 'users.json'),
+    interior_gallery: path.join(DATA_DIR, 'interior_gallery.json'),
     
     // [Phase 2] 렌탈 서비스 데이터 매핑 추가
     rental_req: path.join(DATA_DIR, 'rental_req.json'),
@@ -1279,6 +1281,40 @@ app.get('/api/inbox/request', authenticateAdmin, (req, res) => {
 
 app.get('/api/inbox/driver', authenticateAdmin, (req, res) => {
     res.json(readData('inbox_drv'));
+});
+
+app.get('/api/interior-gallery', (req, res) => {
+    const items = normalizeInteriorGalleryItems(readData('interior_gallery'));
+    res.json({ success: true, items });
+});
+
+app.post('/api/interior-gallery', authenticateAdmin, (req, res) => {
+    const payload = Array.isArray(req.body) ? req.body : (req.body && Array.isArray(req.body.items) ? req.body.items : []);
+    const items = normalizeInteriorGalleryItems(payload);
+    if (!saveData('interior_gallery', items)) {
+        return res.status(500).json({ success: false, error: '시공 사진 저장에 실패했습니다.' });
+    }
+    return res.json({ success: true, items });
+});
+
+app.delete('/api/interior-gallery/:id', authenticateAdmin, (req, res) => {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ success: false, error: '삭제할 사진 id가 필요합니다.' });
+
+    const current = normalizeInteriorGalleryItems(readData('interior_gallery'));
+    const next = current.filter(item => String(item.id) !== id);
+    if (!saveData('interior_gallery', next)) {
+        return res.status(500).json({ success: false, error: '시공 사진 삭제에 실패했습니다.' });
+    }
+    return res.json({ success: true, items: next });
+});
+
+app.delete('/api/interior-gallery', authenticateAdmin, (req, res) => {
+    const cleared = [];
+    if (!saveData('interior_gallery', cleared)) {
+        return res.status(500).json({ success: false, error: '시공 사진 초기화에 실패했습니다.' });
+    }
+    return res.json({ success: true, items: cleared });
 });
 
 // ==========================================

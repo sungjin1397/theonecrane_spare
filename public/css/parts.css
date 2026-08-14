@@ -6,6 +6,304 @@
     display: none;
 }
 
+.parts-consult-wrapper {
+    max-width: 1100px;
+}
+
+.parts-top-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid #dbe7f1;
+    padding-bottom: 12px;
+}
+
+.parts-main-tab,
+.interior-tab {
+    border: 1px solid #dbe7f1;
+    background: #edf5ff;
+    color: #1d4f91;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.parts-main-tab.active,
+.interior-tab.active {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+.parts-main-panel,
+.interior-panel {
+    display: none;
+}
+
+.parts-main-panel.active,
+.interior-panel.active {
+    display: block;
+}
+
+.interior-subtabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.interior-intro {
+    margin-bottom: 18px;
+}
+
+.interior-heading {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: clamp(22px, 3vw, 30px);
+}
+
+.interior-intro p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.7;
+}
+
+.interior-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.interior-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.interior-form-row.full {
+    grid-column: 1 / -1;
+}
+
+.interior-form-row label,
+.interior-form-row input,
+.interior-form-row select,
+.interior-form-row textarea {
+    font: inherit;
+}
+
+.interior-form-row label {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.interior-form-row input,
+.interior-form-row select,
+.interior-form-row textarea {
+    width: 100%;
+    border: 1px solid #d7e3f1;
+    border-radius: 12px;
+    padding: 11px 12px;
+    background: #fff;
+    color: #111827;
+    box-sizing: border-box;
+}
+
+.interior-form-row textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+.interior-gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.gallery-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.interior-gallery-uploader {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 18px;
+    background: #f8fbff;
+    border: 1px solid #dfeaf7;
+    border-radius: 16px;
+}
+
+.gallery-upload-form {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.gallery-upload-label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0f2fe;
+    color: #0f172a;
+    border: 1px solid #bae6fd;
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.gallery-upload-label input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.gallery-submit-btn {
+    padding: 10px 18px;
+}
+
+.gallery-clear-btn {
+    padding: 9px 14px;
+}
+
+.interior-gallery-selected-info {
+    grid-column: 1 / -1;
+    color: #475569;
+    font-size: 13px;
+}
+
+.interior-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    min-height: 180px;
+}
+
+.interior-photo-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid #dfe9f5;
+    background: #f8fbff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.interior-photo-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+}
+
+.interior-photo-card .photo-meta {
+    padding: 12px;
+    background: #ffffff;
+}
+
+.interior-photo-card .photo-meta strong {
+    display: block;
+    font-size: 14px;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.interior-photo-card .photo-meta p {
+    margin: 0;
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.interior-photo-card .remove-photo {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: none;
+    background: rgba(15, 23, 42, 0.72);
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.interior-image-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.interior-image-modal.active {
+    display: flex;
+}
+
+.interior-image-modal-content {
+    position: relative;
+    max-width: min(90vw, 900px);
+    width: 100%;
+    background: #fff;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
+}
+
+.interior-image-modal-content img {
+    width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: 12px;
+    display: block;
+    background: #f8fafc;
+}
+
+.interior-image-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(17, 24, 39, 0.8);
+    color: white;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.interior-image-modal-meta {
+    margin-top: 12px;
+}
+
+.interior-image-modal-meta strong {
+    display: block;
+    font-size: 18px;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.interior-image-modal-meta p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.6;
+}
+
 .mall-heading {
     margin-bottom: 5px;
 }
@@ -52,4 +350,26 @@
     width: 20px;
     height: 20px;
     cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .parts-top-tabs,
+    .interior-subtabs,
+    .gallery-actions,
+    .interior-gallery-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .interior-form {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-upload-label,
+    .gallery-clear-btn,
+    .parts-main-tab,
+    .interior-tab {
+        width: 100%;
+        text-align: center;
+    }
 }

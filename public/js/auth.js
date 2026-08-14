@@ -96,16 +96,60 @@ window.processAdminAuth = async function () {
 };
 
 // 2. 로그인 성공 시 UI 전환
-window.handleLoginSuccess = function () {
+window.refreshAdminAccessUI = function () {
+  const token = window.getAdminToken?.();
+  if (token && !sessionStorage.getItem('is_admin_logged_in')) {
+    sessionStorage.setItem('is_admin_logged_in', 'true');
+  }
+
+  const isAdmin = sessionStorage.getItem('is_admin_logged_in') === 'true' && Boolean(window.getAdminToken());
   const lockBox = document.querySelector('.lock-container');
   const adminSubHeader = document.querySelector('.admin-sub-header');
   const adminSection = document.getElementById('sec-admin');
+  const adminPanes = document.querySelectorAll('.admin-pane');
 
-  if (lockBox) lockBox.style.display = 'none';
-  if (adminSubHeader) adminSubHeader.style.display = 'block';
-  if (adminSection) {
-    adminSection.classList.add('active');
-    adminSection.style.display = 'block';
+  if (isAdmin) {
+    if (lockBox) lockBox.style.display = 'none';
+    if (adminSubHeader) adminSubHeader.style.display = 'block';
+    if (adminSection) {
+      adminSection.classList.add('active');
+      adminSection.style.display = 'block';
+    }
+    adminPanes.forEach((pane) => {
+      pane.style.display = 'none';
+    });
+
+    if (typeof window.switchAdminTab === 'function') {
+      window.switchAdminTab('inbox');
+    }
+    if (typeof window.updateActiveUserStatus === 'function') {
+      window.updateActiveUserStatus();
+    }
+    if (typeof window.renderAdminUsers === 'function') {
+      window.renderAdminUsers();
+    }
+    if (typeof window.startOnlinePanelPolling === 'function') {
+      window.startOnlinePanelPolling();
+    }
+  } else {
+    if (lockBox) lockBox.style.display = 'block';
+    if (adminSubHeader) adminSubHeader.style.display = 'none';
+    if (adminSection) {
+      adminSection.classList.add('active');
+      adminSection.style.display = 'block';
+    }
+    adminPanes.forEach((pane) => {
+      pane.style.display = 'none';
+    });
+    if (typeof window.stopOnlinePanelPolling === 'function') {
+      window.stopOnlinePanelPolling();
+    }
+  }
+};
+
+window.handleLoginSuccess = function () {
+  if (typeof window.refreshAdminAccessUI === 'function') {
+    window.refreshAdminAccessUI();
   }
 
   if (typeof window.switchAdminTab === 'function') {
@@ -136,51 +180,19 @@ window.processAdminLogout = function () {
 
     safeToast("🔓 성공적으로 로그아웃되었습니다.", "info");
 
-    // 페이지를 새로고침하여 초기 상태로 원복
-    window.location.reload();
+    if (typeof window.refreshAdminAccessUI === 'function') {
+      window.refreshAdminAccessUI();
+    }
+    if (typeof window.showTab === 'function') {
+      window.showTab('common');
+    }
   }
 };
 
 // 4. 통합 세션 체킹 (페이지 로드 / 새로고침 시)
 window.checkAdminSession = function () {
-  const token = window.getAdminToken?.();
-  if (token && !sessionStorage.getItem('is_admin_logged_in')) {
-    sessionStorage.setItem('is_admin_logged_in', 'true');
-  }
-  const isAdmin = sessionStorage.getItem('is_admin_logged_in') === 'true' && Boolean(window.getAdminToken());
-  const lockBox = document.querySelector('.lock-container');
-  const adminSubHeader = document.querySelector('.admin-sub-header');
-  const adminSection = document.getElementById('sec-admin');
-
-  if (isAdmin) {
-    if (lockBox) lockBox.style.display = 'none';
-    if (adminSubHeader) adminSubHeader.style.display = 'block';
-    if (adminSection) {
-      adminSection.classList.add('active');
-      adminSection.style.display = 'block';
-    }
-    if (typeof window.switchAdminTab === 'function') {
-      window.switchAdminTab('inbox');
-    }
-    if (typeof window.updateActiveUserStatus === 'function') {
-      window.updateActiveUserStatus();
-    }
-    if (typeof window.renderAdminUsers === 'function') {
-      window.renderAdminUsers();
-    }
-    if (typeof window.startOnlinePanelPolling === 'function') {
-      window.startOnlinePanelPolling();
-    }
-  } else {
-    if (lockBox) lockBox.style.display = 'block';
-    if (adminSubHeader) adminSubHeader.style.display = 'none';
-    const adminPanes = document.querySelectorAll('.admin-pane');
-    adminPanes.forEach((pane) => {
-      pane.style.display = 'none';
-    });
-    if (typeof window.stopOnlinePanelPolling === 'function') {
-      window.stopOnlinePanelPolling();
-    }
+  if (typeof window.refreshAdminAccessUI === 'function') {
+    window.refreshAdminAccessUI();
   }
 };
 
