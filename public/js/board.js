@@ -549,14 +549,41 @@ window.handleBoardSubmit = async function (e) {
         localStorage.setItem('crane_board_posts', JSON.stringify(refreshed));
       }
     } else {
-      let currentPosts = getBoardPosts();
-      if (!Array.isArray(currentPosts)) {
-        currentPosts = getDefaultPosts();
+      const userToken = sessionStorage.getItem('userToken') || '';
+      if (!userToken) {
+        safeToast('회원 인증이 만료되었습니다. 다시 로그인해 주세요.', 'warning');
+        return;
       }
 
-      currentPosts.unshift(newPost);
-      localStorage.setItem('crane_board_posts', JSON.stringify(currentPosts));
-      window.__boardPostsCache = currentPosts;
+      const response = await fetch('/api/board', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          writer: author,
+          category: 'GENERAL',
+          isPinned: false,
+          images: attachedImages
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 413) {
+        throw new Error('사진 용량이 너무 큽니다. 사진 크기(해상도/품질)를 줄여 다시 시도해 주세요.');
+      }
+      if (!response.ok || !result?.success || !result?.data) {
+        throw new Error(result?.error || '회원 게시글 서버 저장에 실패했습니다.');
+      }
+
+      const refreshed = await window.fetchBoardPostsFromApi();
+      if (Array.isArray(refreshed)) {
+        window.__boardPostsCache = refreshed;
+        localStorage.setItem('crane_board_posts', JSON.stringify(refreshed));
+      }
     }
 
     safeToast("게시글이 성공적으로 등록되었습니다.", "success");

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "546d79b6-b5c9-4928-88d7-f93a5c952be0",
+    "title": "회원 게시글 테스트",
+    "writer": "테스터",
+    "content": "다른 브라우저에서도 보이게 해야 합니다.",
+    "category": "GENERAL",
+    "isPinned": false,
+    "images": [],
+    "views": 0,
+    "createdAt": "2026. 8. 16. 오후 2:33:07"
+  }
+]

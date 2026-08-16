@@ -1,0 +1,13 @@
+[
+  {
+    "id": "2af00922-6622-4fb5-be97-c09170d3e3e0",
+    "title": "회원 게시글 테스트",
+    "writer": "외부 현장 회원",
+    "content": "다른 브라우저에서도 보이게 해야 합니다.",
+    "category": "GENERAL",
+    "isPinned": false,
+    "images": [],
+    "views": 0,
+    "createdAt": "2026. 8. 16. 오후 2:32:13"
+  }
+]

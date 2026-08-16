@@ -1,0 +1,13 @@
+[
+  {
+    "id": "1e67a1b7-990b-4bed-aafa-2cdb2b0b13b3",
+    "name": "테스터2",
+    "phone": "01058387127",
+    "pw": "abcd1234",
+    "role": "USER",
+    "craneType": "",
+    "memo": "",
+    "editable": false,
+    "regDate": "2026-08-16"
+  }
+]

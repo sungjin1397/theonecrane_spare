@@ -379,6 +379,26 @@ const authenticateUser = (req, res, next) => {
     }
 };
 
+const authenticateBoardWriter = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+    if (!token) return res.status(401).json({ success: false, error: '인증 토큰이 필요합니다.' });
+
+    try {
+        const adminDecoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'], issuer: 'theonecrane', audience: 'admin' });
+        req.user = { ...adminDecoded, role: 'admin' };
+        return next();
+    } catch (adminErr) {
+        try {
+            const userDecoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'], issuer: 'theonecrane', audience: 'user' });
+            req.user = { ...userDecoded, role: 'user' };
+            return next();
+        } catch (userErr) {
+            return res.status(401).json({ success: false, error: '세션이 만료되었습니다.' });
+        }
+    }
+};
+
 function buildInquiry(body, fields) {
     const input = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
     const record = {};
@@ -1132,17 +1152,34 @@ app.get('/api/board', (req, res) => {
 });
 
 // 게시글 등록
-app.post('/api/board', authenticateAdmin, (req, res) => {
+app.post('/api/board', authenticateBoardWriter, (req, res) => {
     const board = readData('board');
+    const users = readData('users');
+    const isAdmin = String(req.user?.role || '').toLowerCase() === 'admin';
+    const category = cleanText(req.body?.category || 'GENERAL', 30);
+    const isPinned = Boolean(req.body?.isPinned);
+
+    if (!isAdmin && (category === 'NOTICE' || isPinned)) {
+        return res.status(400).json({
+            success: false,
+            error: '공지사항 작성은 관리자만 가능합니다.'
+        });
+    }
+
+    let writerName = isAdmin ? cleanText(req.body?.writer || '관리자 (대표 조성진)', 50) : '외부 현장 회원';
+    if (!isAdmin) {
+        const userRecord = users.find(item => String(item.id) === String(req.user?.sub || '') || String(item.phone) === String(req.user?.phone || ''));
+        writerName = cleanText(userRecord?.name || req.body?.writer || '외부 현장 회원', 50);
+    }
 
     const post = {
         id: crypto.randomUUID(),
-        title: cleanText(req.body.title, 200),
-        writer: cleanText(req.body.writer || '관리자', 50),
-        content: cleanText(req.body.content, 5000),
-        category: cleanText(req.body.category || 'GENERAL', 30),
-        isPinned: Boolean(req.body.isPinned),
-        images: sanitizeBoardImages(req.body.images),
+        title: cleanText(req.body?.title, 200),
+        writer: writerName,
+        content: cleanText(req.body?.content, 5000),
+        category: isAdmin ? category : 'GENERAL',
+        isPinned: isAdmin ? isPinned : false,
+        images: sanitizeBoardImages(req.body?.images),
         views: 0,
         createdAt: new Date().toLocaleString('ko-KR', {
             timeZone: 'Asia/Seoul'
@@ -1409,6 +1446,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`서버가 ${PORT}번 포트에서 가동 중입니다. (Phase 2 적용 완료)`);
-});
+if (require.main === module) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`서버가 ${PORT}번 포트에서 가동 중입니다. (Phase 2 적용 완료)`);
+    });
+}
+
+module.exports = { app };

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "fe320522-9994-4588-8f34-4970801d5244",
+    "name": "테스터",
+    "phone": "01099998888",
+    "pw": "abcd1234",
+    "role": "USER",
+    "craneType": "",
+    "memo": "",
+    "editable": false,
+    "regDate": "2026-08-16"
+  },
+  {
+    "id": "2b164415-11a4-42c5-bb7b-85ff7b2eda73",
+    "name": "테스터2",
+    "phone": "01077778888",
+    "pw": "abcd1234",
+    "role": "USER",
+    "craneType": "",
+    "memo": "",
+    "editable": false,
+    "regDate": "2026-08-16"
+  }
+]
