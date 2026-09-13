@@ -131,12 +131,81 @@ function safeToast(msg, type = 'info') {
 // 안전한 게시글 목록 조회
 window.__boardPostsCache = null;
 
+function compactBoardPostForStorage(post) {
+  if (!post || typeof post !== 'object') return post;
+
+  const compact = { ...post };
+  compact.title = String(compact.title || '').slice(0, 200);
+  compact.author = String(compact.author || '').slice(0, 80);
+  compact.content = String(compact.content || '').slice(0, 4000);
+
+  if (Array.isArray(compact.images)) {
+    compact.images = compact.images
+      .map((image) => {
+        if (!image || typeof image !== 'object') return null;
+        const data = typeof image.data === 'string' ? image.data : '';
+        if (!data.startsWith('data:image/')) return null;
+        return {
+          ...image,
+          data: data.length > 40000 ? data.slice(0, 40000) : data
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 1);
+  }
+
+  return compact;
+}
+
+function persistBoardPostsToStorage(posts) {
+  const safePosts = Array.isArray(posts) ? posts.map(compactBoardPostForStorage) : [];
+
+  try {
+    const serialized = JSON.stringify(safePosts);
+    if (serialized.length > 2_500_000) {
+      const trimmed = safePosts.map(post => ({ ...post, images: [] }));
+      localStorage.setItem('crane_board_posts', JSON.stringify(trimmed));
+      return;
+    }
+    localStorage.setItem('crane_board_posts', serialized);
+  } catch (err) {
+    console.warn('게시판 로컬 저장 실패, 이미지 정보를 제거해 재시도합니다.', err);
+    try {
+      const trimmed = safePosts.map(post => ({ ...post, images: [] }));
+      localStorage.setItem('crane_board_posts', JSON.stringify(trimmed));
+    } catch (fallbackErr) {
+      console.error('게시판 로컬 저장 최종 실패:', fallbackErr);
+      try {
+        localStorage.removeItem('crane_board_posts');
+      } catch (removeErr) {
+        console.warn('기존 게시판 로컬 데이터 삭제 실패:', removeErr);
+      }
+    }
+  }
+}
+
 window.getLocalBoardPosts = function () {
   try {
     const data = localStorage.getItem('crane_board_posts');
     if (!data) return [];
     const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(post => {
+      if (!post || typeof post !== 'object') return null;
+      const clean = { ...post };
+      if (Array.isArray(clean.images)) {
+        clean.images = clean.images
+          .map(image => {
+            if (!image || typeof image !== 'object') return null;
+            const data = typeof image.data === 'string' ? image.data : '';
+            if (!data.startsWith('data:image/')) return null;
+            return { ...image, data: data.length > 40000 ? data.slice(0, 40000) : data };
+          })
+          .filter(Boolean)
+          .slice(0, 1);
+      }
+      return clean;
+    }).filter(Boolean);
   } catch (err) {
     console.error("게시글 데이터 파싱 오류:", err);
     return [];
@@ -210,7 +279,7 @@ window.loadBoardPosts = async function () {
   if (Array.isArray(apiPosts)) {
     const syncedPosts = window.mergeBoardPostsWithStoredData(apiPosts, storedPosts);
     window.__boardPostsCache = syncedPosts;
-    localStorage.setItem('crane_board_posts', JSON.stringify(syncedPosts));
+    persistBoardPostsToStorage(syncedPosts);
   } else {
     window.__boardPostsCache = storedPosts;
   }
@@ -500,7 +569,7 @@ window.handleBoardSubmit = async function (e) {
       const refreshed = await window.fetchBoardPostsFromApi();
       if (Array.isArray(refreshed)) {
         window.__boardPostsCache = refreshed;
-        localStorage.setItem('crane_board_posts', JSON.stringify(refreshed));
+        persistBoardPostsToStorage(refreshed);
       }
     } else {
       const userToken = sessionStorage.getItem('userToken') || '';
@@ -536,7 +605,7 @@ window.handleBoardSubmit = async function (e) {
       const refreshed = await window.fetchBoardPostsFromApi();
       if (Array.isArray(refreshed)) {
         window.__boardPostsCache = refreshed;
-        localStorage.setItem('crane_board_posts', JSON.stringify(refreshed));
+        persistBoardPostsToStorage(refreshed);
       }
     }
 
@@ -563,7 +632,7 @@ window.openBoardViewModal = async function (id) {
   window.__boardPostsCache = posts;
  
   try {
-    localStorage.setItem('crane_board_posts', JSON.stringify(posts));
+    persistBoardPostsToStorage(posts);
   } catch (e) {
     console.error("조회수 업데이트 실패:", e);
   }
@@ -574,7 +643,7 @@ window.openBoardViewModal = async function (id) {
     if (response.ok && result?.success && typeof result.data?.views === 'number') {
       post.views = result.data.views;
       window.__boardPostsCache = posts;
-      localStorage.setItem('crane_board_posts', JSON.stringify(posts));
+      persistBoardPostsToStorage(posts);
     }
   } catch (e) {
     console.warn('조회수 서버 반영 실패:', e);
@@ -660,7 +729,7 @@ window.deleteCurrentPost = async function () {
     let posts = getBoardPosts();
     posts = posts.filter(p => String(p.id) !== String(currentViewingPostId));
     window.__boardPostsCache = posts;
-    localStorage.setItem('crane_board_posts', JSON.stringify(posts));
+    persistBoardPostsToStorage(posts);
 
     currentViewingPostId = null;
     safeToast("게시글이 삭제되었습니다.", "warning");
@@ -670,7 +739,7 @@ window.deleteCurrentPost = async function () {
     if (Array.isArray(refreshed)) {
       const merged = window.mergeBoardPostsWithStoredData(refreshed, posts);
       window.__boardPostsCache = merged;
-      localStorage.setItem('crane_board_posts', JSON.stringify(merged));
+      persistBoardPostsToStorage(merged);
     }
 
     window.renderBoardPosts();
@@ -690,7 +759,7 @@ window.toggleCurrentPostPinned = function () {
     if (!post) return;
     post.isPinned = !post.isPinned;
     window.__boardPostsCache = posts;
-    localStorage.setItem('crane_board_posts', JSON.stringify(posts));
+    persistBoardPostsToStorage(posts);
     safeToast(post.isPinned ? '게시글이 상단에 고정되었습니다.' : '상단 고정이 해제되었습니다.', 'success');
     searchBoardPosts();
     renderMainNoticeList();
