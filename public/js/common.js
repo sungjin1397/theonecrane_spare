@@ -23,6 +23,77 @@ function sanitizeUrl(url) {
   return escapeHtml(trimmed);
 }
 
+window.compressImageFileToDataUrl = async function (file, options = {}) {
+  if (!file || typeof file !== 'object' || !file.type || !file.type.startsWith('image/')) {
+    throw new Error('이미지 파일만 업로드할 수 있습니다.');
+  }
+
+  const maxWidth = Number(options.maxWidth || 1600);
+  const maxHeight = Number(options.maxHeight || 1600);
+  const minQuality = Number(options.minQuality || 0.55);
+  const targetQuality = Number(options.quality || 0.72);
+  const targetBytes = Number(options.targetBytes || 350 * 1024);
+
+  const reader = new FileReader();
+  const dataUrl = await new Promise((resolve, reject) => {
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('이미지 읽기에 실패했습니다.'));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('이미지 해석에 실패했습니다.'));
+    image.src = dataUrl;
+  });
+
+  const width = img.naturalWidth || img.width || 0;
+  const height = img.naturalHeight || img.height || 0;
+  if (!width || !height) {
+    return dataUrl;
+  }
+
+  const scale = Math.min(1, maxWidth / Math.max(width, height), maxHeight / Math.max(width, height));
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return dataUrl;
+  }
+
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+  const estimateBytes = (candidate) => {
+    if (!candidate || typeof candidate !== 'string') return Number.MAX_SAFE_INTEGER;
+    const payload = candidate.split(',')[1] || '';
+    return Math.floor((payload.length * 3) / 4);
+  };
+
+  let result = canvas.toDataURL(mime, targetQuality);
+  if (mime === 'image/png') {
+    return result;
+  }
+
+  let quality = targetQuality;
+  if (estimateBytes(result) > targetBytes) {
+    for (let step = 0; step < 8; step += 1) {
+      quality = Math.max(minQuality, Number((quality - 0.08).toFixed(2)));
+      const candidate = canvas.toDataURL('image/jpeg', quality);
+      if (estimateBytes(candidate) <= targetBytes) {
+        result = candidate;
+        break;
+      }
+      result = candidate;
+    }
+  }
+
+  return result;
+};
+
 // 토스트 알림 메시지 (객체 변환 안전성 추가)
 window.showToast = function (message, type = 'info') {
   const toast = document.getElementById('theone-toast');

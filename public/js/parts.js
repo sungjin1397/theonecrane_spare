@@ -347,25 +347,12 @@ window.saveInteriorGallery = async function() {
 };
 
 window.resizeImageForGallery = function(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function() {
-            const img = new Image();
-            img.onload = function() {
-                const maxSize = 1600;
-                const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(1, Math.round(img.width * scale));
-                canvas.height = Math.max(1, Math.round(img.height * scale));
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.72));
-            };
-            img.onerror = reject;
-            img.src = reader.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+    return window.compressImageFileToDataUrl(file, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.72,
+        minQuality: 0.55,
+        targetBytes: 350 * 1024
     });
 };
 

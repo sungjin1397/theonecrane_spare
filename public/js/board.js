@@ -53,64 +53,18 @@ function estimateDataUrlBytes(dataUrl) {
 }
 
 async function optimizeImageForBoard(file) {
-  const normalizedType = String(file?.type || '').toLowerCase();
-  const outputType = normalizedType === 'image/png' ? 'image/png' : 'image/jpeg';
-  const srcDataUrl = await fileToDataUrl(file);
-  const image = await loadImageFromDataUrl(srcDataUrl);
-
-  const originalWidth = Number(image.naturalWidth || image.width || 0);
-  const originalHeight = Number(image.naturalHeight || image.height || 0);
-  if (!originalWidth || !originalHeight) {
-    return {
-      name: file.name,
-      type: normalizedType || outputType,
-      data: srcDataUrl
-    };
-  }
-
-  let scale = Math.min(1, BOARD_MAX_IMAGE_DIMENSION / Math.max(originalWidth, originalHeight));
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return {
-      name: file.name,
-      type: normalizedType || outputType,
-      data: srcDataUrl
-    };
-  }
-
-  let bestDataUrl = srcDataUrl;
-  let quality = outputType === 'image/png' ? undefined : 0.9;
-
-  for (let resizeStep = 0; resizeStep < 5; resizeStep += 1) {
-    const width = Math.max(1, Math.floor(originalWidth * scale));
-    const height = Math.max(1, Math.floor(originalHeight * scale));
-    canvas.width = width;
-    canvas.height = height;
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(image, 0, 0, width, height);
-
-    if (outputType === 'image/png') {
-      bestDataUrl = canvas.toDataURL(outputType);
-      if (estimateDataUrlBytes(bestDataUrl) <= BOARD_TARGET_IMAGE_BYTES) break;
-    } else {
-      for (quality = 0.9; quality >= 0.45; quality -= 0.1) {
-        const candidate = canvas.toDataURL(outputType, Number(quality.toFixed(2)));
-        bestDataUrl = candidate;
-        if (estimateDataUrlBytes(candidate) <= BOARD_TARGET_IMAGE_BYTES) {
-          break;
-        }
-      }
-      if (estimateDataUrlBytes(bestDataUrl) <= BOARD_TARGET_IMAGE_BYTES) break;
-    }
-
-    scale *= 0.82;
-  }
+  const dataUrl = await window.compressImageFileToDataUrl(file, {
+    maxWidth: BOARD_MAX_IMAGE_DIMENSION,
+    maxHeight: BOARD_MAX_IMAGE_DIMENSION,
+    quality: 0.72,
+    minQuality: 0.55,
+    targetBytes: BOARD_TARGET_IMAGE_BYTES
+  });
 
   return {
     name: file.name,
-    type: outputType,
-    data: bestDataUrl
+    type: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+    data: dataUrl
   };
 }
 
